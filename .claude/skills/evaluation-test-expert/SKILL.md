@@ -1,7 +1,29 @@
 ---
 name: evaluation-test-expert
-description: Use this skill to test the evaluation pipeline — linear probing for positions/velocities, degradation curves, PCA/t-SNE visualizations, baseline comparisons (copy-last-frame, pixel predictor), notebook reproducibility. Trigger when changes touch scripts/evaluate.py, notebooks/evaluation.ipynb, baselines/pixel_predictor.py, or any figure-generation code.
+description: Use this skill to test and **review** the evaluation pipeline — linear probing for positions/velocities, degradation curves, PCA/t-SNE visualizations, baseline comparisons (copy-last-frame, pixel predictor), notebook reproducibility. Trigger when changes touch scripts/evaluate.py, notebooks/evaluation.ipynb, baselines/pixel_predictor.py, or any figure-generation code, **or when the evaluation pipeline is declared done and needs an independent review gate per CLAUDE.md**.
 ---
+
+# Review mode (feature-gate)
+
+When invoked as the **independent reviewer** for a completed evaluation feature (per the "Feature review gate" rule in CLAUDE.md):
+
+1. **Anchor on the plan and CLAUDE.md.** `PLAN_Mini_V-JEPA.md` sections 5 (baseline), 6 (evaluation), 11 (success criteria), 8 (README expectations).
+2. **Map the feature's goal to the broader project.** The evaluation pipeline produces the numbers and figures that *are* the project's deliverable to the hackathon jury. Honest numbers > flattering numbers. Review with the *would-a-skeptical-reader-trust-these-results* lens.
+3. **Independent stance.** Don't trust headline numbers. Run the evaluation yourself on a tiny / untrained model and verify: (a) random baseline R² ≈ 0 (probe doesn't leak), (b) baselines have parity in params and epochs with the JEPA model, (c) train/val/test split is at the *sequence* level, (d) the notebook runs end-to-end with a fixed seed.
+4. **Cross-check against CLAUDE.md.** Code style, English only, no new deps, no AI-attribution residue in figures/captions/notebook outputs.
+5. **Findings report:**
+   - **Scope reviewed:** files + line ranges.
+   - **Goal alignment:** do the metrics/figures match what the README will claim? Are the right baselines present?
+   - **Correctness:** leak-free split confirmed; random baseline R² value; parity of param counts / epochs between JEPA and pixel baseline; notebook executes top-to-bottom.
+   - **Plan/CLAUDE.md compliance:** itemized.
+   - **Integrity risks:** anywhere a future "improvement" could silently inflate headline numbers (target shift, train-on-test, baseline starved of capacity, random baseline gamed).
+   - **Verdict:** **GO**, **GO with caveats**, or **NO-GO**.
+6. **Do not modify implementation code in review mode** unless explicitly asked. Add/extend tests only.
+
+Until the verdict is **GO** (or accepted **GO with caveats**), the next feature must not start.
+
+---
+
 
 # Evaluation Test Expert — Mini V-JEPA
 

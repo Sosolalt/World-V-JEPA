@@ -1,7 +1,29 @@
 ---
 name: training-loop-test-expert
-description: Use this skill to test the training loop — optimizer config, LR/EMA schedules, gradient clipping, anti-collapse monitoring (avg_std, effective_rank, avg_cosine_sim), checkpointing, MPS-specific gotchas. Trigger when changes touch scripts/train.py, mini_vjepa/vjepa.py training entry points, schedulers, or monitoring code.
+description: Use this skill to test and **review** the training loop — optimizer config, LR/EMA schedules, gradient clipping, anti-collapse monitoring (avg_std, effective_rank, avg_cosine_sim), checkpointing, MPS-specific gotchas. Trigger when changes touch scripts/train.py, mini_vjepa/vjepa.py training entry points, schedulers, or monitoring code, **or when the training loop is declared done and needs an independent review gate per CLAUDE.md**.
 ---
+
+# Review mode (feature-gate)
+
+When invoked as the **independent reviewer** for a completed training-loop feature (per the "Feature review gate" rule in CLAUDE.md):
+
+1. **Anchor on the plan and CLAUDE.md.** `PLAN_Mini_V-JEPA.md` section 4 (setup, training loop, monitoring, checkpointing, MPS gotchas) and section 13 (risks). `CLAUDE.md` makes anti-collapse monitoring non-negotiable.
+2. **Map the feature's goal to the broader project.** This is the only chance to catch collapse *during* training. A loop that "runs" but silently collapses, or one whose "best" checkpoint is chosen by loss instead of effective rank, is a project-killer. Review with the *can-this-loop-actually-deliver-150-honest-epochs* lens.
+3. **Independent stance.** Don't trust the implementer. Run a 3-mini-epoch smoke test on the simple config yourself. Step the schedulers in isolation and check values at epochs 0/10/75/150. Inspect optimizer param groups directly.
+4. **Cross-check against CLAUDE.md.** Anti-collapse monitors wired, no torch.compile, no fp16, MPS env var set, code style, English only, no new deps. **No AI-attribution residue** anywhere (file headers, comments, log messages).
+5. **Findings report:**
+   - **Scope reviewed:** files + line ranges.
+   - **Goal alignment:** does the loop implement plan section 4.2 faithfully? Sampling bounds, EMA order, grad-clip placement.
+   - **Correctness:** LR at epochs 0/10/75/150, τ at same epochs, smoke-test loss trajectory, final avg_std and effective_rank, checkpoint best-criterion = effective_rank.
+   - **Plan/CLAUDE.md compliance:** itemized.
+   - **Collapse-risk surface:** anywhere a future tweak could disable monitoring without anyone noticing.
+   - **Verdict:** **GO**, **GO with caveats**, or **NO-GO**.
+6. **Do not modify implementation code in review mode** unless explicitly asked. Add/extend tests only.
+
+Until the verdict is **GO** (or accepted **GO with caveats**), the next feature must not start.
+
+---
+
 
 # Training Loop Test Expert — Mini V-JEPA
 

@@ -1,7 +1,29 @@
 ---
 name: model-architecture-test-expert
-description: Use this skill to test the V-JEPA model architecture — context encoder, temporal aggregation, transformer predictor, EMA target encoder. Verifies tensor shapes, parameter counts, gradient flow, stop-gradient correctness, and that the target encoder is not trained by backprop. Trigger when changes touch mini_vjepa/encoder.py, predictor.py, ema.py, vjepa.py, masking.py, or losses.py.
+description: Use this skill to test and **review** the V-JEPA model architecture — context encoder, temporal aggregation, transformer predictor, EMA target encoder. Verifies tensor shapes, parameter counts, gradient flow, stop-gradient correctness, and that the target encoder is not trained by backprop. Trigger when changes touch mini_vjepa/encoder.py, predictor.py, ema.py, vjepa.py, masking.py, or losses.py, **or when a model component is declared done and needs an independent review gate per CLAUDE.md**.
 ---
+
+# Review mode (feature-gate)
+
+When invoked as the **independent reviewer** for a completed model-architecture feature (per the "Feature review gate" rule in CLAUDE.md):
+
+1. **Anchor on the plan and CLAUDE.md.** `PLAN_Mini_V-JEPA.md` sections 2.1–2.6 fix the architecture exactly. `CLAUDE.md` makes anti-collapse load-bearing.
+2. **Map the feature's goal to the broader project.** This is the model that is supposed to learn physics in latent space. Any silent break — target encoder receiving grad, predictor ignoring Δt, variance reg with zero gradient — destroys training without crashing. Review with the *will-this-actually-train* lens.
+3. **Independent stance.** Don't trust comments or implementer claims. Construct the module yourself in a Python shell, push random tensors through it, inspect shapes, count parameters, run a forward+backward and verify gradient presence/absence on each parameter group.
+4. **Cross-check against CLAUDE.md.** No dropout, GroupNorm not BatchNorm, no torch.compile, no fp16, code style, English only, no new deps.
+5. **Findings report:**
+   - **Scope reviewed:** files + line ranges.
+   - **Goal alignment:** does the module match plan 2.x exactly? Any silent deviation (extra layer, wrong norm, missing time token)?
+   - **Correctness:** param counts (encoder X.XM / predictor X.XM / target encoder X.XM not trainable), shape checks, stop-gradient verified, Δt sensitivity verified, var-reg gradient non-zero on degenerate input.
+   - **Plan/CLAUDE.md compliance:** itemized.
+   - **Collapse-risk surface:** anywhere the design now allows silent collapse to slip past monitoring.
+   - **Verdict:** **GO**, **GO with caveats**, or **NO-GO**.
+6. **Do not modify implementation code in review mode** unless explicitly asked. Add/extend tests only.
+
+Until the verdict is **GO** (or accepted **GO with caveats**), the next feature must not start.
+
+---
+
 
 # Model Architecture Test Expert — Mini V-JEPA
 

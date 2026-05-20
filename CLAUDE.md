@@ -21,6 +21,29 @@ The project spans five distinct technical domains. Each has a dedicated testing-
 
 When asked to test or validate code in one of these areas, invoke the matching skill.
 
+## Feature review gate — MANDATORY
+
+This project uses a multi-agent workflow. Implementation and review are separated.
+
+**Rule:** Every time a *feature* is finished (not every few lines — a feature is a coherent unit, e.g. "physics simulator", "encoder + EMA", "training loop end-to-end", "linear probing"), spawn an **independent reviewer agent** before moving on to the next feature.
+
+What counts as "a feature is done":
+- A milestone listed in the PLAN's section 10 timeline (one of the J1–J7 deliverables), or
+- A self-contained module that other modules will start depending on (e.g. `simulation/physics.py`, `mini_vjepa/encoder.py`, `scripts/train.py` end-to-end), or
+- I explicitly say "this part is done".
+
+What does **not** trigger a review:
+- Renaming a variable, fixing a typo, adjusting a hyperparameter.
+- Mid-feature commits, refactors-in-progress, half-written modules.
+
+How to run the review:
+1. Use the `Agent` tool to spawn a reviewer whose skill matches the domain (e.g. `physics-test-expert` reviews the physics module). The reviewer must run **independently** — give it the feature scope, the relevant file paths, and pointers to [PLAN_Mini_V-JEPA.md](PLAN_Mini_V-JEPA.md) and this CLAUDE.md. Do **not** pre-bake your own conclusions into the prompt — let the reviewer form its own.
+2. The reviewer follows the **Review mode** section of its SKILL.md: understands the feature's goal in the context of the full project, checks it against the plan and CLAUDE.md, writes tests where useful, and reports findings.
+3. Wait for the reviewer's verdict — **GO**, **GO with caveats**, or **NO-GO** — before starting the next feature.
+4. On **NO-GO** or **GO with caveats**, address the findings, then either re-review (if the changes were substantive) or proceed (if the reviewer pre-approved the minor cleanups in writing).
+
+Surface the verdict to me verbatim. Never silently override a NO-GO.
+
 ## Git policy — STRICT
 
 - **Never** run `git commit` or `git push` unless I **explicitly** ask in the current message. Staging, `git status`, `git diff`, `git log` are fine when useful.

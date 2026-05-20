@@ -1,7 +1,29 @@
 ---
 name: data-pipeline-test-expert
-description: Use this skill to test the dataset generation pipeline — NPZ format/shapes/dtypes, rendering→storage roundtrip, dataset class indexing, RAM footprint, sample/default/stress configs. Trigger when changes touch mini_vjepa/dataset.py, simulation/generator.py, scripts/generate_data.py, configs/*.yaml, or the data/ layout.
+description: Use this skill to test and **review** the dataset generation pipeline — NPZ format/shapes/dtypes, rendering→storage roundtrip, dataset class indexing, RAM footprint, sample/default/stress configs. Trigger when changes touch mini_vjepa/dataset.py, simulation/generator.py, scripts/generate_data.py, configs/*.yaml, or the data/ layout, **or when the data pipeline feature is declared done and needs an independent review gate per CLAUDE.md**.
 ---
+
+# Review mode (feature-gate)
+
+When invoked as the **independent reviewer** for a completed data-pipeline feature (per the "Feature review gate" rule in CLAUDE.md):
+
+1. **Anchor on the plan and CLAUDE.md.** Read `PLAN_Mini_V-JEPA.md` sections 3.4 (Dataset) and 4.2 (training loop's sampling), plus `CLAUDE.md`. The dataset contract is what the training loop will assume — any deviation breaks training silently.
+2. **Map the feature's goal to the broader project.** The pipeline must hand the training loop frames + aligned metadata, in the exact shapes/dtypes the model expects, fast enough that data-loading isn't the bottleneck, and with strategy diversity that the model actually sees varied physics. Review with this *training-readiness* lens.
+3. **Independent stance.** Do not trust the implementer's claims about "it loads fine". Generate a tiny dataset yourself (`scripts/generate_data.py` on the simple config with N small), inspect the NPZ on disk (`np.load` and check `.files`, shapes, dtypes, file size), and instantiate the `Dataset` to fetch a batch.
+4. **Cross-check against CLAUDE.md.** Code style, English-only, no new deps, file layout matches plan section 7, no AI-attribution residue.
+5. **Findings report:**
+   - **Scope reviewed:** files + line ranges.
+   - **Goal alignment:** does the pipeline deliver what training expects (per plan 4.2)? Indices, shapes, dtypes, units.
+   - **Correctness:** observed shapes/dtypes, file size, RAM footprint, off-by-one check at `t_start=16, Δt=12`.
+   - **Plan/CLAUDE.md compliance:** itemized.
+   - **Downstream risks:** anything that could surface as a training bug (BGR/RGB flip, dtype upcast, channel order, leak between train/val sequences).
+   - **Verdict:** **GO**, **GO with caveats**, or **NO-GO**.
+6. **Do not modify implementation code in review mode** unless explicitly asked. Add/extend tests in `tests/` only.
+
+Until the verdict is **GO** (or accepted **GO with caveats**), the next feature must not start.
+
+---
+
 
 # Data Pipeline Test Expert — Mini V-JEPA Dataset
 

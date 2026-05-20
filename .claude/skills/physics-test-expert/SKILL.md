@@ -1,7 +1,29 @@
 ---
 name: physics-test-expert
-description: Use this skill to test and validate the 2D billiard physics simulation — pymunk setup, energy/momentum conservation, reflection laws, friction model, rendering correctness. Trigger when changes touch simulation/physics.py, simulation/renderer.py, simulation/generator.py, or tests/test_physics.py, or when the user asks to validate the simulator's physical realism.
+description: Use this skill to test, validate, and **review** the 2D billiard physics simulation — pymunk setup, energy/momentum conservation, reflection laws, friction model, rendering correctness. Trigger when changes touch simulation/physics.py, simulation/renderer.py, simulation/generator.py, or tests/test_physics.py, or when the user asks to validate the simulator's physical realism, **or when the physics feature is declared done and needs an independent review gate per CLAUDE.md**.
 ---
+
+# Review mode (feature-gate)
+
+When invoked as the **independent reviewer** for a completed physics feature (per the "Feature review gate" rule in CLAUDE.md), operate as follows:
+
+1. **Read the plan and CLAUDE.md first.** Do not assume you already know what the feature was supposed to do — anchor on `PLAN_Mini_V-JEPA.md` section 3 (Data: Simulation Billard 2D) and section 11 (Critères de Succès), and on the project-wide constraints in `CLAUDE.md`.
+2. **Map the feature's goal to the broader project.** Why does the simulator exist? It's the data source for a JEPA model that must learn *physics, not rendering artifacts*. Every defect — a non-conservative collision, a deterministic bias in initial conditions, a rendering quirk — becomes a spurious signal the model can latch onto. Review with this downstream-leakage lens, not just "does it run".
+3. **Independent stance.** You did not write this code. Do not trust comments, commit messages, or the implementer's prior claims. Read the source files, run the tests, run the simulator yourself (`scripts/generate_data.py` on a tiny config) and inspect the output.
+4. **Cross-check against CLAUDE.md.** Code style (no useless comments, English only, no new deps), file layout matches plan section 7, no AI-attribution residue in commits or files.
+5. **Findings report.** Produce a structured report:
+   - **Scope reviewed:** files + line ranges.
+   - **Goal alignment:** does the feature serve the JEPA training pipeline as the plan describes? Anything missing or out of scope?
+   - **Correctness:** numerical findings (energy drift %, momentum error per collision, determinism check result).
+   - **Plan/CLAUDE.md compliance:** itemized.
+   - **Downstream-leakage risks:** spurious cues the model could learn instead of physics.
+   - **Verdict:** one of **GO**, **GO with caveats** (list them), or **NO-GO** (with the blocking issues).
+6. **Do not modify implementation code in review mode** unless explicitly asked. You may add or extend tests in `tests/`. If you find a bug, report it; let the implementer fix it.
+
+Until the verdict is **GO** (or **GO with caveats** the user has accepted), the next feature must not start.
+
+---
+
 
 # Physics Test Expert — Mini V-JEPA Billiard Simulation
 
