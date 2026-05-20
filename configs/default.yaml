@@ -1,0 +1,99 @@
+# Mini V-JEPA — config schema (FROZEN, shared across all configs).
+#
+# Top-level sections: data, model, training.
+#
+# data:
+#   n_balls (int)                     number of balls in the simulation
+#   n_sequences (int)                 number of sequences to generate
+#   sequence_length (int)             frames per sequence (default 32)
+#   frame_size (int)                  square frame side in pixels (default 64)
+#   table_ratio (list[int, int])      table aspect ratio, e.g. [2, 1]
+#   ball_radius (float)               radius in normalized table units
+#   physics_fps (int)                 simulator step rate in Hz
+#   init_strategies (dict[str,float]) initial-condition strategy name -> sampling weight;
+#                                     keys: break, midgame_cluster, midgame_spread,
+#                                           two_ball, random_velocities
+#   output_path (str)                 NPZ output path for the generated dataset
+#
+# model:
+#   latent_dim (int)                  per-token embedding dimension
+#   spatial_tokens (int)              spatial tokens per frame (8x8 = 64)
+#   context_frames (int)              number of frames in the context window
+#   predictor_layers (int)            transformer predictor depth
+#   predictor_heads (int)             transformer predictor attention heads
+#   predictor_ffn (int)               predictor FFN hidden size
+#   delta_t_min (int)                 minimum prediction horizon (in frames)
+#   delta_t_max (int)                 maximum prediction horizon (in frames)
+#
+# training:
+#   batch_size (int)
+#   epochs (int)
+#   lr_peak (float)                   peak learning rate after warmup
+#   lr_final (float)                  final learning rate at end of cosine decay
+#   warmup_epochs (int)
+#   weight_decay_encoder (float)
+#   weight_decay_predictor (float)
+#   grad_clip (float)
+#   ema_tau_start (float)             EMA decay at training start
+#   ema_tau_end (float)               EMA decay at training end (cosine schedule)
+#   var_loss_weight (float)           VICReg variance term weight
+#   cov_loss_weight (float)           VICReg covariance term weight (decorrelates dims)
+#   collapse_eff_rank_threshold       effective_rank below this counts as collapsed
+#   collapse_patience_epochs          abort training after this many consecutive collapsed epochs
+#   checkpoint_every (int)            save a checkpoint every N epochs
+#   max_checkpoints (int)             max number of checkpoints kept on disk
+#   seed (int)
+#
+# baseline_overrides (optional):
+#   any training key can be shadowed here for the pixel baseline only.
+#   used to give the pixel decoder a lower LR + value-clip than V-JEPA.
+
+data:
+  n_balls: 9
+  n_sequences: 10000
+  sequence_length: 32
+  frame_size: 64
+  table_ratio: [2, 1]
+  ball_radius: 0.03
+  physics_fps: 120
+  init_strategies:
+    break: 0.30
+    midgame_cluster: 0.20
+    midgame_spread: 0.20
+    two_ball: 0.15
+    random_velocities: 0.15
+  output_path: "data/default.npz"
+
+model:
+  latent_dim: 128
+  spatial_tokens: 64
+  context_frames: 4
+  predictor_layers: 3
+  predictor_heads: 4
+  predictor_ffn: 256
+  delta_t_min: 1
+  delta_t_max: 12
+
+training:
+  batch_size: 64
+  epochs: 150
+  lr_peak: 1.5e-4
+  lr_final: 1.0e-5
+  warmup_epochs: 10
+  weight_decay_encoder: 0.05
+  weight_decay_predictor: 0.0
+  grad_clip: 1.0
+  ema_tau_start: 0.996
+  ema_tau_end: 1.0
+  var_loss_weight: 25.0
+  cov_loss_weight: 1.0
+  collapse_eff_rank_threshold: 5.0
+  collapse_patience_epochs: 8
+  checkpoint_every: 25
+  max_checkpoints: 4
+  seed: 42
+
+baseline_overrides:
+  lr_peak: 5.0e-5
+  grad_clip: 1.0
+  grad_value_clip: 0.5

@@ -1,0 +1,49 @@
+data:
+  n_balls: 3
+  n_sequences: 2000
+  sequence_length: 32
+  frame_size: 64
+  table_ratio: [2, 1]
+  ball_radius: 0.03
+  physics_fps: 120
+  init_strategies:
+    break: 0.30
+    midgame_cluster: 0.20
+    midgame_spread: 0.20
+    two_ball: 0.15
+    random_velocities: 0.15
+  output_path: "data/simple.npz"
+
+model:
+  latent_dim: 128
+  spatial_tokens: 64
+  context_frames: 4
+  predictor_layers: 3
+  predictor_heads: 4
+  predictor_ffn: 256
+  delta_t_min: 1
+  delta_t_max: 12
+
+training:
+  batch_size: 64
+  epochs: 150
+  lr_peak: 1.5e-4
+  lr_final: 1.0e-5
+  warmup_epochs: 10
+  weight_decay_encoder: 0.05
+  weight_decay_predictor: 0.0
+  grad_clip: 1.0
+  ema_tau_start: 0.996
+  ema_tau_end: 1.0
+  var_loss_weight: 25.0
+  cov_loss_weight: 1.0
+  collapse_eff_rank_threshold: 5.0
+  collapse_patience_epochs: 8
+  checkpoint_every: 25
+  max_checkpoints: 4
+  seed: 42
+
+baseline_overrides:
+  lr_peak: 5.0e-5
+  grad_clip: 1.0
+  grad_value_clip: 0.5
