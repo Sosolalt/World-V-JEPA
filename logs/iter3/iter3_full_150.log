@@ -1,0 +1,306 @@
+[train] device=mps, data=data/default.npz, epochs=150
+[train] params total=1,391,616 trainable=920,448
+[train] reg_target=both loss_fn=mse mask_ratio=0.75 cov_w=25.0 var_w=25.0 ema_tau_start=0.99
+/Users/lucas/Documents/Projects/world_models/world-jepa/mini_vjepa/losses.py:49: UserWarning: The operator 'aten::_linalg_eigh.eigenvalues' is not currently supported on the MPS backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/aten/src/ATen/mps/MPSFallback.mm:13.)
+  eigvals = torch.linalg.eigvalsh(cov)
+[epoch 000] loss=105.4238 mse=1.9442 var=0.5297 cov=3.6094 avg_std=0.2637 eff_rank=23.31 cos_sim=0.9278 ctx_eff_rank=12.59 ctx_cos=0.3569 lr=5.03e-06 tau=0.99000 t=37.1s
+[ETA] avg=37.1s/epoch, 149 epochs left, ~92.3 min remaining (~1.54 h)
+[epoch 001] loss=251.8753 mse=1.7206 var=0.4393 cov=9.5669 avg_std=0.3916 eff_rank=32.41 cos_sim=0.8442 ctx_eff_rank=5.45 ctx_cos=0.1464 lr=1.00e-05 tau=0.99000 t=35.3s
+[ETA] avg=36.2s/epoch, 148 epochs left, ~89.4 min remaining (~1.49 h)
+[epoch 002] loss=275.1140 mse=1.5088 var=0.4377 cov=10.5065 avg_std=0.4494 eff_rank=42.44 cos_sim=0.7952 ctx_eff_rank=6.06 ctx_cos=0.4624 lr=1.50e-05 tau=0.99000 t=35.5s
+[ETA] avg=36.0s/epoch, 147 epochs left, ~88.2 min remaining (~1.47 h)
+[epoch 003] loss=220.9529 mse=0.9792 var=0.4359 cov=8.3630 avg_std=0.4972 eff_rank=46.58 cos_sim=0.7485 ctx_eff_rank=3.63 ctx_cos=0.2216 lr=2.00e-05 tau=0.99001 t=37.4s
+[ETA] avg=36.3s/epoch, 146 epochs left, ~88.4 min remaining (~1.47 h)
+[epoch 004] loss=120.1476 mse=1.0555 var=0.4494 cov=4.3143 avg_std=0.5580 eff_rank=55.05 cos_sim=0.6818 ctx_eff_rank=7.22 ctx_cos=0.3470 lr=2.50e-05 tau=0.99002 t=35.7s
+[ETA] avg=36.2s/epoch, 145 epochs left, ~87.5 min remaining (~1.46 h)
+[epoch 005] loss=57.6357 mse=0.8888 var=0.4789 cov=1.7910 avg_std=0.5211 eff_rank=52.93 cos_sim=0.7199 ctx_eff_rank=5.34 ctx_cos=0.2052 lr=3.00e-05 tau=0.99003 t=35.8s
+[ETA] avg=36.2s/epoch, 144 epochs left, ~86.8 min remaining (~1.45 h)
+[epoch 006] loss=102.4615 mse=0.9386 var=0.4428 cov=3.6181 avg_std=0.5522 eff_rank=58.22 cos_sim=0.6845 ctx_eff_rank=3.21 ctx_cos=0.1559 lr=3.50e-05 tau=0.99004 t=35.9s
+[ETA] avg=36.1s/epoch, 143 epochs left, ~86.1 min remaining (~1.43 h)
+[epoch 007] loss=48.8089 mse=0.9892 var=0.4746 cov=1.4381 avg_std=0.6268 eff_rank=63.20 cos_sim=0.5891 ctx_eff_rank=6.21 ctx_cos=0.2010 lr=4.00e-05 tau=0.99005 t=36.1s
+[ETA] avg=36.1s/epoch, 142 epochs left, ~85.5 min remaining (~1.42 h)
+[epoch 008] loss=36.2881 mse=0.9450 var=0.4813 cov=0.9324 avg_std=0.6281 eff_rank=65.79 cos_sim=0.5825 ctx_eff_rank=8.82 ctx_cos=0.3401 lr=4.50e-05 tau=0.99007 t=36.0s
+[ETA] avg=36.1s/epoch, 141 epochs left, ~84.8 min remaining (~1.41 h)
+[epoch 009] loss=29.6492 mse=0.8868 var=0.5408 cov=0.6097 avg_std=0.6474 eff_rank=67.86 cos_sim=0.5541 ctx_eff_rank=4.76 ctx_cos=0.6766 lr=5.00e-05 tau=0.99009 t=35.9s
+[ETA] avg=36.1s/epoch, 140 epochs left, ~84.2 min remaining (~1.40 h)
+[epoch 010] loss=21.9996 mse=0.6946 var=0.6333 cov=0.2189 avg_std=0.6420 eff_rank=68.22 cos_sim=0.5591 ctx_eff_rank=2.92 ctx_cos=0.6584 lr=5.00e-05 tau=0.99011 t=35.6s
+[ETA] avg=36.0s/epoch, 139 epochs left, ~83.5 min remaining (~1.39 h)
+[epoch 011] loss=19.0047 mse=0.6811 var=0.5868 cov=0.1462 avg_std=0.6520 eff_rank=69.90 cos_sim=0.5420 ctx_eff_rank=3.77 ctx_cos=0.5523 lr=5.00e-05 tau=0.99013 t=35.8s
+[ETA] avg=36.0s/epoch, 138 epochs left, ~82.8 min remaining (~1.38 h)
+[epoch 012] loss=22.8170 mse=0.7169 var=0.5260 cov=0.3580 avg_std=0.6519 eff_rank=69.90 cos_sim=0.5386 ctx_eff_rank=4.72 ctx_cos=0.3946 lr=5.00e-05 tau=0.99016 t=35.8s
+[ETA] avg=36.0s/epoch, 137 epochs left, ~82.2 min remaining (~1.37 h)
+[epoch 013] loss=24.6773 mse=0.7971 var=0.4981 cov=0.4571 avg_std=0.6713 eff_rank=70.84 cos_sim=0.5102 ctx_eff_rank=5.19 ctx_cos=0.4697 lr=4.99e-05 tau=0.99019 t=35.8s
+[ETA] avg=36.0s/epoch, 136 epochs left, ~81.6 min remaining (~1.36 h)
+[epoch 014] loss=24.7322 mse=0.8404 var=0.5128 cov=0.4428 avg_std=0.6364 eff_rank=69.09 cos_sim=0.5604 ctx_eff_rank=5.17 ctx_cos=0.7050 lr=4.99e-05 tau=0.99022 t=35.8s
+[ETA] avg=36.0s/epoch, 135 epochs left, ~80.9 min remaining (~1.35 h)
+[epoch 015] loss=23.3933 mse=0.7325 var=0.5158 cov=0.3906 avg_std=0.6816 eff_rank=71.10 cos_sim=0.5009 ctx_eff_rank=3.65 ctx_cos=0.7997 lr=4.98e-05 tau=0.99025 t=35.7s
+[ETA] avg=36.0s/epoch, 134 epochs left, ~80.3 min remaining (~1.34 h)
+[epoch 016] loss=23.4206 mse=0.7091 var=0.5645 cov=0.3440 avg_std=0.6737 eff_rank=70.77 cos_sim=0.5059 ctx_eff_rank=5.08 ctx_cos=0.3872 lr=4.98e-05 tau=0.99028 t=35.9s
+[ETA] avg=36.0s/epoch, 133 epochs left, ~79.7 min remaining (~1.33 h)
+[epoch 017] loss=21.4653 mse=0.8767 var=0.5459 cov=0.2776 avg_std=0.6851 eff_rank=72.00 cos_sim=0.4809 ctx_eff_rank=4.19 ctx_cos=0.3653 lr=4.97e-05 tau=0.99032 t=35.6s
+[ETA] avg=35.9s/epoch, 132 epochs left, ~79.1 min remaining (~1.32 h)
+[epoch 018] loss=23.2413 mse=0.8590 var=0.5079 cov=0.3874 avg_std=0.6944 eff_rank=72.38 cos_sim=0.4614 ctx_eff_rank=5.19 ctx_cos=0.5501 lr=4.96e-05 tau=0.99036 t=36.2s
+[ETA] avg=35.9s/epoch, 131 epochs left, ~78.5 min remaining (~1.31 h)
+[epoch 019] loss=18.4862 mse=0.7720 var=0.5948 cov=0.1138 avg_std=0.6987 eff_rank=72.41 cos_sim=0.4532 ctx_eff_rank=6.50 ctx_cos=0.5916 lr=4.95e-05 tau=0.99040 t=36.7s
+[ETA] avg=36.0s/epoch, 130 epochs left, ~78.0 min remaining (~1.30 h)
+[epoch 020] loss=22.2297 mse=0.9147 var=0.8165 cov=0.0361 avg_std=0.3063 eff_rank=41.65 cos_sim=0.8969 ctx_eff_rank=6.68 ctx_cos=0.5901 lr=4.94e-05 tau=0.99044 t=37.0s
+[ETA] avg=36.0s/epoch, 129 epochs left, ~77.5 min remaining (~1.29 h)
+[epoch 021] loss=19.5268 mse=0.9001 var=0.6603 cov=0.0848 avg_std=0.5367 eff_rank=60.27 cos_sim=0.6810 ctx_eff_rank=6.63 ctx_cos=0.5720 lr=4.93e-05 tau=0.99048 t=36.5s
+[ETA] avg=36.1s/epoch, 128 epochs left, ~76.9 min remaining (~1.28 h)
+[epoch 022] loss=19.2666 mse=0.8538 var=0.6678 cov=0.0687 avg_std=0.5498 eff_rank=61.52 cos_sim=0.6629 ctx_eff_rank=6.67 ctx_cos=0.5691 lr=4.92e-05 tau=0.99053 t=36.1s
+[ETA] avg=36.1s/epoch, 127 epochs left, ~76.3 min remaining (~1.27 h)
+[epoch 023] loss=19.2776 mse=0.8178 var=0.6681 cov=0.0703 avg_std=0.5718 eff_rank=63.01 cos_sim=0.6332 ctx_eff_rank=6.48 ctx_cos=0.5727 lr=4.90e-05 tau=0.99058 t=36.4s
+[ETA] avg=36.1s/epoch, 126 epochs left, ~75.7 min remaining (~1.26 h)
+[epoch 024] loss=19.7802 mse=0.8052 var=0.6999 cov=0.0591 avg_std=0.5588 eff_rank=60.69 cos_sim=0.6486 ctx_eff_rank=6.29 ctx_cos=0.5679 lr=4.89e-05 tau=0.99063 t=36.7s
+[ETA] avg=36.1s/epoch, 125 epochs left, ~75.2 min remaining (~1.25 h)
+[epoch 025] loss=19.6495 mse=0.8366 var=0.6890 cov=0.0635 avg_std=0.5345 eff_rank=60.79 cos_sim=0.6792 ctx_eff_rank=6.60 ctx_cos=0.5610 lr=4.87e-05 tau=0.99068 t=36.4s
+[ETA] avg=36.1s/epoch, 124 epochs left, ~74.6 min remaining (~1.24 h)
+[epoch 026] loss=18.6659 mse=0.7879 var=0.6288 cov=0.0863 avg_std=0.5927 eff_rank=63.32 cos_sim=0.6021 ctx_eff_rank=6.88 ctx_cos=0.5663 lr=4.86e-05 tau=0.99073 t=36.1s
+[ETA] avg=36.1s/epoch, 123 epochs left, ~74.0 min remaining (~1.23 h)
+[epoch 027] loss=19.4057 mse=0.7890 var=0.6855 cov=0.0592 avg_std=0.5726 eff_rank=63.11 cos_sim=0.6283 ctx_eff_rank=6.42 ctx_cos=0.5548 lr=4.84e-05 tau=0.99079 t=36.2s
+[ETA] avg=36.1s/epoch, 122 epochs left, ~73.4 min remaining (~1.22 h)
+[epoch 028] loss=19.3584 mse=0.7959 var=0.6630 cov=0.0795 avg_std=0.5771 eff_rank=63.10 cos_sim=0.6200 ctx_eff_rank=6.44 ctx_cos=0.5535 lr=4.82e-05 tau=0.99085 t=37.6s
+[ETA] avg=36.2s/epoch, 121 epochs left, ~72.9 min remaining (~1.22 h)
+[epoch 029] loss=19.4158 mse=0.7796 var=0.6821 cov=0.0633 avg_std=0.5540 eff_rank=62.95 cos_sim=0.6495 ctx_eff_rank=6.20 ctx_cos=0.5691 lr=4.80e-05 tau=0.99091 t=37.4s
+[ETA] avg=36.2s/epoch, 120 epochs left, ~72.4 min remaining (~1.21 h)
+[epoch 030] loss=19.4590 mse=0.9442 var=0.6653 cov=0.0753 avg_std=0.6033 eff_rank=63.19 cos_sim=0.5920 ctx_eff_rank=7.42 ctx_cos=0.5334 lr=4.78e-05 tau=0.99097 t=35.6s
+[ETA] avg=36.2s/epoch, 119 epochs left, ~71.8 min remaining (~1.20 h)
+[epoch 031] loss=21.3646 mse=0.8832 var=0.7870 cov=0.0323 avg_std=0.3886 eff_rank=50.60 cos_sim=0.8278 ctx_eff_rank=7.50 ctx_cos=0.5812 lr=4.76e-05 tau=0.99103 t=35.4s
+[ETA] avg=36.2s/epoch, 118 epochs left, ~71.1 min remaining (~1.19 h)
+[epoch 032] loss=18.7582 mse=0.8285 var=0.6293 cov=0.0878 avg_std=0.5767 eff_rank=61.61 cos_sim=0.6218 ctx_eff_rank=7.78 ctx_cos=0.5408 lr=4.74e-05 tau=0.99110 t=35.5s
+[ETA] avg=36.1s/epoch, 117 epochs left, ~70.5 min remaining (~1.17 h)
+[epoch 033] loss=23.5888 mse=0.7773 var=0.6544 cov=0.2581 avg_std=0.4794 eff_rank=54.70 cos_sim=0.7379 ctx_eff_rank=4.02 ctx_cos=0.5675 lr=4.72e-05 tau=0.99116 t=35.5s
+[ETA] avg=36.1s/epoch, 116 epochs left, ~69.8 min remaining (~1.16 h)
+[epoch 034] loss=24.5948 mse=0.9461 var=0.5887 cov=0.3572 avg_std=0.5092 eff_rank=54.85 cos_sim=0.7092 ctx_eff_rank=7.19 ctx_cos=0.3274 lr=4.69e-05 tau=0.99123 t=35.9s
+[ETA] avg=36.1s/epoch, 115 epochs left, ~69.2 min remaining (~1.15 h)
+[epoch 035] loss=25.2447 mse=0.9654 var=0.5757 cov=0.3955 avg_std=0.4786 eff_rank=54.92 cos_sim=0.7415 ctx_eff_rank=8.56 ctx_cos=0.1798 lr=4.67e-05 tau=0.99130 t=35.5s
+[ETA] avg=36.1s/epoch, 114 epochs left, ~68.6 min remaining (~1.14 h)
+[epoch 036] loss=19.9941 mse=0.9341 var=0.5956 cov=0.1668 avg_std=0.5504 eff_rank=57.91 cos_sim=0.6555 ctx_eff_rank=10.95 ctx_cos=0.3985 lr=4.64e-05 tau=0.99137 t=35.5s
+[ETA] avg=36.1s/epoch, 113 epochs left, ~68.0 min remaining (~1.13 h)
+[epoch 037] loss=24.6982 mse=0.9929 var=0.7718 cov=0.1764 avg_std=0.2552 eff_rank=34.10 cos_sim=0.9240 ctx_eff_rank=9.65 ctx_cos=0.3343 lr=4.62e-05 tau=0.99145 t=35.6s
+[ETA] avg=36.1s/epoch, 112 epochs left, ~67.3 min remaining (~1.12 h)
+[epoch 038] loss=20.0664 mse=0.8636 var=0.7186 cov=0.0495 avg_std=0.5446 eff_rank=59.45 cos_sim=0.6606 ctx_eff_rank=8.97 ctx_cos=0.4624 lr=4.59e-05 tau=0.99152 t=35.8s
+[ETA] avg=36.1s/epoch, 111 epochs left, ~66.7 min remaining (~1.11 h)
+[epoch 039] loss=19.9550 mse=0.8283 var=0.7031 cov=0.0620 avg_std=0.5275 eff_rank=59.28 cos_sim=0.6799 ctx_eff_rank=8.57 ctx_cos=0.4255 lr=4.56e-05 tau=0.99160 t=35.5s
+[ETA] avg=36.1s/epoch, 110 epochs left, ~66.1 min remaining (~1.10 h)
+[epoch 040] loss=19.3867 mse=0.8405 var=0.6757 cov=0.0662 avg_std=0.5501 eff_rank=59.89 cos_sim=0.6554 ctx_eff_rank=9.28 ctx_cos=0.4494 lr=4.54e-05 tau=0.99168 t=35.9s
+[ETA] avg=36.0s/epoch, 109 epochs left, ~65.5 min remaining (~1.09 h)
+[epoch 041] loss=19.0668 mse=0.8077 var=0.6532 cov=0.0772 avg_std=0.5731 eff_rank=60.81 cos_sim=0.6189 ctx_eff_rank=10.01 ctx_cos=0.4046 lr=4.51e-05 tau=0.99175 t=36.0s
+[ETA] avg=36.0s/epoch, 108 epochs left, ~64.9 min remaining (~1.08 h)
+[epoch 042] loss=19.8439 mse=0.8023 var=0.7003 cov=0.0613 avg_std=0.5336 eff_rank=58.50 cos_sim=0.6676 ctx_eff_rank=10.25 ctx_cos=0.4420 lr=4.48e-05 tau=0.99184 t=36.2s
+[ETA] avg=36.1s/epoch, 107 epochs left, ~64.3 min remaining (~1.07 h)
+[epoch 043] loss=22.3268 mse=0.8161 var=0.6460 cov=0.2144 avg_std=0.4818 eff_rank=54.65 cos_sim=0.7306 ctx_eff_rank=5.13 ctx_cos=0.6174 lr=4.45e-05 tau=0.99192 t=36.0s
+[ETA] avg=36.1s/epoch, 106 epochs left, ~63.7 min remaining (~1.06 h)
+[epoch 044] loss=23.6107 mse=0.8078 var=0.5680 cov=0.3441 avg_std=0.5408 eff_rank=59.17 cos_sim=0.6616 ctx_eff_rank=5.48 ctx_cos=0.6606 lr=4.41e-05 tau=0.99200 t=36.6s
+[ETA] avg=36.1s/epoch, 105 epochs left, ~63.1 min remaining (~1.05 h)
+[epoch 045] loss=21.7904 mse=0.7085 var=0.5841 cov=0.2592 avg_std=0.5679 eff_rank=59.32 cos_sim=0.6291 ctx_eff_rank=5.33 ctx_cos=0.6013 lr=4.38e-05 tau=0.99209 t=36.4s
+[ETA] avg=36.1s/epoch, 104 epochs left, ~62.5 min remaining (~1.04 h)
+[epoch 046] loss=22.3956 mse=0.7209 var=0.6085 cov=0.2585 avg_std=0.5513 eff_rank=59.84 cos_sim=0.6497 ctx_eff_rank=5.74 ctx_cos=0.5090 lr=4.35e-05 tau=0.99217 t=36.1s
+[ETA] avg=36.1s/epoch, 103 epochs left, ~61.9 min remaining (~1.03 h)
+[epoch 047] loss=21.3928 mse=0.6869 var=0.5657 cov=0.2625 avg_std=0.5409 eff_rank=58.58 cos_sim=0.6633 ctx_eff_rank=7.89 ctx_cos=0.4066 lr=4.32e-05 tau=0.99226 t=36.1s
+[ETA] avg=36.1s/epoch, 102 epochs left, ~61.3 min remaining (~1.02 h)
+[epoch 048] loss=22.4942 mse=0.7416 var=0.5645 cov=0.3056 avg_std=0.5341 eff_rank=58.79 cos_sim=0.6660 ctx_eff_rank=9.43 ctx_cos=0.3070 lr=4.28e-05 tau=0.99235 t=35.9s
+[ETA] avg=36.1s/epoch, 101 epochs left, ~60.7 min remaining (~1.01 h)
+[epoch 049] loss=18.6238 mse=0.7704 var=0.6227 cov=0.0915 avg_std=0.5680 eff_rank=62.05 cos_sim=0.6200 ctx_eff_rank=9.22 ctx_cos=0.4790 lr=4.25e-05 tau=0.99244 t=36.0s
+[ETA] avg=36.1s/epoch, 100 epochs left, ~60.1 min remaining (~1.00 h)
+[epoch 050] loss=18.8108 mse=0.7795 var=0.6342 cov=0.0871 avg_std=0.5813 eff_rank=63.61 cos_sim=0.6020 ctx_eff_rank=9.44 ctx_cos=0.4819 lr=4.21e-05 tau=0.99253 t=36.1s
+[ETA] avg=36.1s/epoch, 99 epochs left, ~59.5 min remaining (~0.99 h)
+[epoch 051] loss=18.8924 mse=0.7647 var=0.6504 cov=0.0747 avg_std=0.5911 eff_rank=63.76 cos_sim=0.5869 ctx_eff_rank=9.63 ctx_cos=0.5121 lr=4.18e-05 tau=0.99262 t=36.1s
+[ETA] avg=36.1s/epoch, 98 epochs left, ~58.9 min remaining (~0.98 h)
+[epoch 052] loss=19.1945 mse=0.7416 var=0.6799 cov=0.0582 avg_std=0.6043 eff_rank=63.30 cos_sim=0.5685 ctx_eff_rank=8.31 ctx_cos=0.5804 lr=4.14e-05 tau=0.99272 t=36.0s
+[ETA] avg=36.1s/epoch, 97 epochs left, ~58.3 min remaining (~0.97 h)
+[epoch 053] loss=18.7939 mse=0.7211 var=0.6576 cov=0.0653 avg_std=0.6025 eff_rank=63.62 cos_sim=0.5695 ctx_eff_rank=8.01 ctx_cos=0.5756 lr=4.10e-05 tau=0.99281 t=36.1s
+[ETA] avg=36.1s/epoch, 96 epochs left, ~57.7 min remaining (~0.96 h)
+[epoch 054] loss=19.1143 mse=0.7166 var=0.6714 cov=0.0646 avg_std=0.5754 eff_rank=63.55 cos_sim=0.6070 ctx_eff_rank=9.51 ctx_cos=0.5170 lr=4.06e-05 tau=0.99291 t=36.5s
+[ETA] avg=36.1s/epoch, 95 epochs left, ~57.1 min remaining (~0.95 h)
+[epoch 055] loss=20.2971 mse=0.8841 var=0.7207 cov=0.0558 avg_std=0.5996 eff_rank=63.00 cos_sim=0.5761 ctx_eff_rank=9.32 ctx_cos=0.5912 lr=4.03e-05 tau=0.99300 t=36.0s
+[ETA] avg=36.1s/epoch, 94 epochs left, ~56.5 min remaining (~0.94 h)
+[epoch 056] loss=19.0868 mse=0.6972 var=0.6814 cov=0.0541 avg_std=0.5778 eff_rank=64.26 cos_sim=0.6021 ctx_eff_rank=9.17 ctx_cos=0.5751 lr=3.99e-05 tau=0.99310 t=35.8s
+[ETA] avg=36.1s/epoch, 93 epochs left, ~55.9 min remaining (~0.93 h)
+[epoch 057] loss=18.7102 mse=0.8363 var=0.6292 cov=0.0857 avg_std=0.6168 eff_rank=64.22 cos_sim=0.5578 ctx_eff_rank=9.63 ctx_cos=0.6448 lr=3.95e-05 tau=0.99320 t=35.9s
+[ETA] avg=36.1s/epoch, 92 epochs left, ~55.3 min remaining (~0.92 h)
+[epoch 058] loss=19.1275 mse=0.7488 var=0.6611 cov=0.0741 avg_std=0.5979 eff_rank=63.99 cos_sim=0.5777 ctx_eff_rank=8.93 ctx_cos=0.6665 lr=3.91e-05 tau=0.99330 t=35.7s
+[ETA] avg=36.1s/epoch, 91 epochs left, ~54.7 min remaining (~0.91 h)
+[epoch 059] loss=20.5180 mse=0.7173 var=0.6383 cov=0.1537 avg_std=0.5881 eff_rank=64.37 cos_sim=0.5913 ctx_eff_rank=7.39 ctx_cos=0.6683 lr=3.87e-05 tau=0.99339 t=35.9s
+[ETA] avg=36.1s/epoch, 90 epochs left, ~54.1 min remaining (~0.90 h)
+[epoch 060] loss=18.6156 mse=0.6685 var=0.6144 cov=0.1035 avg_std=0.6003 eff_rank=64.42 cos_sim=0.5753 ctx_eff_rank=9.68 ctx_cos=0.6093 lr=3.83e-05 tau=0.99350 t=35.8s
+[ETA] avg=36.1s/epoch, 89 epochs left, ~53.5 min remaining (~0.89 h)
+[epoch 061] loss=19.4367 mse=0.6802 var=0.6453 cov=0.1049 avg_std=0.5984 eff_rank=64.80 cos_sim=0.5773 ctx_eff_rank=12.05 ctx_cos=0.5213 lr=3.79e-05 tau=0.99360 t=35.6s
+[ETA] avg=36.0s/epoch, 88 epochs left, ~52.9 min remaining (~0.88 h)
+[epoch 062] loss=18.5469 mse=0.7005 var=0.6492 cov=0.0647 avg_std=0.5996 eff_rank=64.88 cos_sim=0.5711 ctx_eff_rank=11.50 ctx_cos=0.5873 lr=3.74e-05 tau=0.99370 t=35.6s
+[ETA] avg=36.0s/epoch, 87 epochs left, ~52.3 min remaining (~0.87 h)
+[epoch 063] loss=18.5442 mse=0.7425 var=0.6462 cov=0.0658 avg_std=0.6056 eff_rank=65.96 cos_sim=0.5617 ctx_eff_rank=10.99 ctx_cos=0.5869 lr=3.70e-05 tau=0.99380 t=35.6s
+[ETA] avg=36.0s/epoch, 86 epochs left, ~51.6 min remaining (~0.86 h)
+[epoch 064] loss=18.3516 mse=0.7539 var=0.6261 cov=0.0778 avg_std=0.6222 eff_rank=66.66 cos_sim=0.5363 ctx_eff_rank=11.44 ctx_cos=0.5633 lr=3.66e-05 tau=0.99390 t=36.1s
+[ETA] avg=36.0s/epoch, 85 epochs left, ~51.0 min remaining (~0.85 h)
+[epoch 065] loss=18.1657 mse=0.7040 var=0.6250 cov=0.0735 avg_std=0.6277 eff_rank=67.01 cos_sim=0.5267 ctx_eff_rank=11.89 ctx_cos=0.5813 lr=3.62e-05 tau=0.99401 t=35.7s
+[ETA] avg=36.0s/epoch, 84 epochs left, ~50.4 min remaining (~0.84 h)
+[epoch 066] loss=18.9656 mse=0.6958 var=0.6759 cov=0.0549 avg_std=0.6082 eff_rank=65.52 cos_sim=0.5527 ctx_eff_rank=10.45 ctx_cos=0.5767 lr=3.58e-05 tau=0.99411 t=35.7s
+[ETA] avg=36.0s/epoch, 83 epochs left, ~49.8 min remaining (~0.83 h)
+[epoch 067] loss=18.2083 mse=0.6961 var=0.6219 cov=0.0785 avg_std=0.6297 eff_rank=66.22 cos_sim=0.5227 ctx_eff_rank=10.28 ctx_cos=0.5360 lr=3.53e-05 tau=0.99421 t=35.7s
+[ETA] avg=36.0s/epoch, 82 epochs left, ~49.2 min remaining (~0.82 h)
+[epoch 068] loss=19.9415 mse=0.7074 var=0.5967 cov=0.1727 avg_std=0.5830 eff_rank=63.01 cos_sim=0.5940 ctx_eff_rank=7.99 ctx_cos=0.4779 lr=3.49e-05 tau=0.99432 t=35.7s
+[ETA] avg=36.0s/epoch, 81 epochs left, ~48.6 min remaining (~0.81 h)
+[epoch 069] loss=18.8348 mse=0.7840 var=0.6444 cov=0.0776 avg_std=0.6099 eff_rank=65.66 cos_sim=0.5516 ctx_eff_rank=8.60 ctx_cos=0.6319 lr=3.45e-05 tau=0.99442 t=35.6s
+[ETA] avg=36.0s/epoch, 80 epochs left, ~48.0 min remaining (~0.80 h)
+[epoch 070] loss=19.0935 mse=0.7048 var=0.6255 cov=0.1100 avg_std=0.6097 eff_rank=64.67 cos_sim=0.5576 ctx_eff_rank=5.98 ctx_cos=0.7211 lr=3.40e-05 tau=0.99453 t=35.6s
+[ETA] avg=36.0s/epoch, 79 epochs left, ~47.4 min remaining (~0.79 h)
+[epoch 071] loss=19.5651 mse=0.6833 var=0.5885 cov=0.1668 avg_std=0.6142 eff_rank=65.07 cos_sim=0.5515 ctx_eff_rank=7.12 ctx_cos=0.4106 lr=3.36e-05 tau=0.99463 t=35.6s
+[ETA] avg=36.0s/epoch, 78 epochs left, ~46.8 min remaining (~0.78 h)
+[epoch 072] loss=20.9594 mse=0.7480 var=0.5599 cov=0.2485 avg_std=0.6050 eff_rank=64.95 cos_sim=0.5652 ctx_eff_rank=8.50 ctx_cos=0.3383 lr=3.31e-05 tau=0.99474 t=35.6s
+[ETA] avg=36.0s/epoch, 77 epochs left, ~46.2 min remaining (~0.77 h)
+[epoch 073] loss=20.5302 mse=0.7646 var=0.5618 cov=0.2289 avg_std=0.6133 eff_rank=65.88 cos_sim=0.5495 ctx_eff_rank=7.41 ctx_cos=0.4526 lr=3.27e-05 tau=0.99484 t=36.0s
+[ETA] avg=36.0s/epoch, 76 epochs left, ~45.6 min remaining (~0.76 h)
+[epoch 074] loss=19.1845 mse=0.7799 var=0.5628 cov=0.1734 avg_std=0.6263 eff_rank=65.95 cos_sim=0.5331 ctx_eff_rank=10.56 ctx_cos=0.3604 lr=3.22e-05 tau=0.99495 t=35.8s
+[ETA] avg=36.0s/epoch, 75 epochs left, ~45.0 min remaining (~0.75 h)
+[epoch 075] loss=19.0743 mse=0.7811 var=0.5942 cov=0.1375 avg_std=0.6163 eff_rank=65.58 cos_sim=0.5477 ctx_eff_rank=11.55 ctx_cos=0.3380 lr=3.18e-05 tau=0.99505 t=35.7s
+[ETA] avg=36.0s/epoch, 74 epochs left, ~44.4 min remaining (~0.74 h)
+[epoch 076] loss=20.3165 mse=0.8263 var=0.5802 cov=0.1994 avg_std=0.5998 eff_rank=65.64 cos_sim=0.5735 ctx_eff_rank=9.06 ctx_cos=0.3393 lr=3.13e-05 tau=0.99516 t=35.7s
+[ETA] avg=36.0s/epoch, 73 epochs left, ~43.8 min remaining (~0.73 h)
+[epoch 077] loss=18.9631 mse=0.8141 var=0.5487 cov=0.1773 avg_std=0.6211 eff_rank=66.32 cos_sim=0.5431 ctx_eff_rank=9.89 ctx_cos=0.4733 lr=3.09e-05 tau=0.99526 t=35.9s
+[ETA] avg=36.0s/epoch, 72 epochs left, ~43.2 min remaining (~0.72 h)
+[epoch 078] loss=18.3485 mse=0.7844 var=0.6257 cov=0.0769 avg_std=0.6253 eff_rank=66.59 cos_sim=0.5370 ctx_eff_rank=10.59 ctx_cos=0.5668 lr=3.04e-05 tau=0.99537 t=35.7s
+[ETA] avg=36.0s/epoch, 71 epochs left, ~42.6 min remaining (~0.71 h)
+[epoch 079] loss=20.6063 mse=0.8088 var=0.7501 cov=0.0418 avg_std=0.5540 eff_rank=65.60 cos_sim=0.6361 ctx_eff_rank=10.26 ctx_cos=0.6058 lr=3.00e-05 tau=0.99547 t=35.6s
+[ETA] avg=36.0s/epoch, 70 epochs left, ~42.0 min remaining (~0.70 h)
+[epoch 080] loss=18.8168 mse=1.0640 var=0.6454 cov=0.0647 avg_std=0.5053 eff_rank=63.11 cos_sim=0.7102 ctx_eff_rank=9.90 ctx_cos=0.5883 lr=2.96e-05 tau=0.99558 t=35.7s
+[ETA] avg=36.0s/epoch, 69 epochs left, ~41.4 min remaining (~0.69 h)
+[epoch 081] loss=18.3549 mse=0.8284 var=0.6318 cov=0.0692 avg_std=0.5461 eff_rank=64.72 cos_sim=0.6586 ctx_eff_rank=9.82 ctx_cos=0.6069 lr=2.91e-05 tau=0.99568 t=35.6s
+[ETA] avg=36.0s/epoch, 68 epochs left, ~40.8 min remaining (~0.68 h)
+[epoch 082] loss=18.5973 mse=0.9175 var=0.6200 cov=0.0872 avg_std=0.6012 eff_rank=65.54 cos_sim=0.5870 ctx_eff_rank=9.78 ctx_cos=0.6580 lr=2.87e-05 tau=0.99579 t=35.8s
+[ETA] avg=36.0s/epoch, 67 epochs left, ~40.2 min remaining (~0.67 h)
+[epoch 083] loss=20.4001 mse=0.8033 var=0.6950 cov=0.0888 avg_std=0.5179 eff_rank=64.47 cos_sim=0.6898 ctx_eff_rank=7.91 ctx_cos=0.7079 lr=2.82e-05 tau=0.99589 t=35.8s
+[ETA] avg=36.0s/epoch, 66 epochs left, ~39.6 min remaining (~0.66 h)
+[epoch 084] loss=19.0746 mse=0.9557 var=0.6127 cov=0.1121 avg_std=0.6040 eff_rank=65.52 cos_sim=0.5826 ctx_eff_rank=8.95 ctx_cos=0.7318 lr=2.78e-05 tau=0.99599 t=35.8s
+[ETA] avg=36.0s/epoch, 65 epochs left, ~39.0 min remaining (~0.65 h)
+[epoch 085] loss=19.3746 mse=0.7292 var=0.6842 cov=0.0616 avg_std=0.5346 eff_rank=64.82 cos_sim=0.6702 ctx_eff_rank=9.87 ctx_cos=0.7255 lr=2.73e-05 tau=0.99610 t=35.7s
+[ETA] avg=36.0s/epoch, 64 epochs left, ~38.4 min remaining (~0.64 h)
+[epoch 086] loss=19.9976 mse=1.0207 var=0.6730 cov=0.0861 avg_std=0.6130 eff_rank=66.43 cos_sim=0.5705 ctx_eff_rank=8.95 ctx_cos=0.7499 lr=2.69e-05 tau=0.99620 t=35.6s
+[ETA] avg=36.0s/epoch, 63 epochs left, ~37.7 min remaining (~0.63 h)
+[epoch 087] loss=18.7797 mse=0.7300 var=0.6174 cov=0.1046 avg_std=0.5959 eff_rank=66.37 cos_sim=0.5925 ctx_eff_rank=9.06 ctx_cos=0.7542 lr=2.64e-05 tau=0.99630 t=35.7s
+[ETA] avg=35.9s/epoch, 62 epochs left, ~37.1 min remaining (~0.62 h)
+[epoch 088] loss=18.8265 mse=0.7745 var=0.6310 cov=0.0911 avg_std=0.5956 eff_rank=65.72 cos_sim=0.5920 ctx_eff_rank=9.85 ctx_cos=0.7412 lr=2.60e-05 tau=0.99640 t=35.7s
+[ETA] avg=35.9s/epoch, 61 epochs left, ~36.5 min remaining (~0.61 h)
+[epoch 089] loss=19.9598 mse=0.8545 var=0.7022 cov=0.0620 avg_std=0.5822 eff_rank=65.36 cos_sim=0.6108 ctx_eff_rank=10.17 ctx_cos=0.6901 lr=2.55e-05 tau=0.99650 t=35.7s
+[ETA] avg=35.9s/epoch, 60 epochs left, ~35.9 min remaining (~0.60 h)
+[epoch 090] loss=18.5600 mse=0.7796 var=0.6083 cov=0.1029 avg_std=0.6127 eff_rank=65.61 cos_sim=0.5670 ctx_eff_rank=9.85 ctx_cos=0.6866 lr=2.51e-05 tau=0.99661 t=35.7s
+[ETA] avg=35.9s/epoch, 59 epochs left, ~35.3 min remaining (~0.59 h)
+[epoch 091] loss=19.1883 mse=0.7154 var=0.6596 cov=0.0793 avg_std=0.5889 eff_rank=66.32 cos_sim=0.5999 ctx_eff_rank=8.95 ctx_cos=0.6364 lr=2.47e-05 tau=0.99670 t=35.7s
+[ETA] avg=35.9s/epoch, 58 epochs left, ~34.7 min remaining (~0.58 h)
+[epoch 092] loss=21.8011 mse=0.9051 var=0.6903 cov=0.1455 avg_std=0.6032 eff_rank=64.52 cos_sim=0.5763 ctx_eff_rank=7.24 ctx_cos=0.4621 lr=2.42e-05 tau=0.99680 t=36.0s
+[ETA] avg=35.9s/epoch, 57 epochs left, ~34.1 min remaining (~0.57 h)
+[epoch 093] loss=20.1105 mse=0.7056 var=0.5756 cov=0.2006 avg_std=0.5863 eff_rank=64.87 cos_sim=0.5998 ctx_eff_rank=8.47 ctx_cos=0.4055 lr=2.38e-05 tau=0.99690 t=35.9s
+[ETA] avg=35.9s/epoch, 56 epochs left, ~33.5 min remaining (~0.56 h)
+[epoch 094] loss=19.1466 mse=0.7540 var=0.5866 cov=0.1491 avg_std=0.6010 eff_rank=65.00 cos_sim=0.5801 ctx_eff_rank=9.16 ctx_cos=0.2553 lr=2.34e-05 tau=0.99700 t=35.8s
+[ETA] avg=35.9s/epoch, 55 epochs left, ~32.9 min remaining (~0.55 h)
+[epoch 095] loss=19.9106 mse=0.7471 var=0.5980 cov=0.1686 avg_std=0.5928 eff_rank=64.41 cos_sim=0.5896 ctx_eff_rank=7.18 ctx_cos=0.3760 lr=2.30e-05 tau=0.99709 t=35.7s
+[ETA] avg=35.9s/epoch, 54 epochs left, ~32.3 min remaining (~0.54 h)
+[epoch 096] loss=18.1058 mse=0.7821 var=0.5943 cov=0.0987 avg_std=0.6100 eff_rank=66.08 cos_sim=0.5625 ctx_eff_rank=10.61 ctx_cos=0.3174 lr=2.26e-05 tau=0.99719 t=35.6s
+[ETA] avg=35.9s/epoch, 53 epochs left, ~31.7 min remaining (~0.53 h)
+[epoch 097] loss=18.2206 mse=0.7963 var=0.6160 cov=0.0810 avg_std=0.6216 eff_rank=66.10 cos_sim=0.5396 ctx_eff_rank=11.76 ctx_cos=0.3758 lr=2.21e-05 tau=0.99728 t=35.8s
+[ETA] avg=35.9s/epoch, 52 epochs left, ~31.1 min remaining (~0.52 h)
+[epoch 098] loss=17.9639 mse=0.7928 var=0.6121 cov=0.0748 avg_std=0.6189 eff_rank=67.26 cos_sim=0.5403 ctx_eff_rank=11.98 ctx_cos=0.4241 lr=2.17e-05 tau=0.99738 t=35.7s
+[ETA] avg=35.9s/epoch, 51 epochs left, ~30.5 min remaining (~0.51 h)
+[epoch 099] loss=18.3266 mse=0.7796 var=0.6297 cov=0.0721 avg_std=0.6250 eff_rank=67.02 cos_sim=0.5251 ctx_eff_rank=12.01 ctx_cos=0.4136 lr=2.13e-05 tau=0.99747 t=35.7s
+[ETA] avg=35.9s/epoch, 50 epochs left, ~29.9 min remaining (~0.50 h)
+[epoch 100] loss=21.0083 mse=0.8544 var=0.7797 cov=0.0264 avg_std=0.4842 eff_rank=63.53 cos_sim=0.7103 ctx_eff_rank=12.72 ctx_cos=0.4322 lr=2.09e-05 tau=0.99756 t=36.0s
+[ETA] avg=35.9s/epoch, 49 epochs left, ~29.3 min remaining (~0.49 h)
+[epoch 101] loss=20.4434 mse=0.9139 var=0.7414 cov=0.0398 avg_std=0.6281 eff_rank=65.74 cos_sim=0.5324 ctx_eff_rank=11.67 ctx_cos=0.4338 lr=2.05e-05 tau=0.99765 t=36.2s
+[ETA] avg=35.9s/epoch, 48 epochs left, ~28.7 min remaining (~0.48 h)
+[epoch 102] loss=21.4067 mse=0.8774 var=0.7964 cov=0.0248 avg_std=0.4711 eff_rank=65.01 cos_sim=0.7310 ctx_eff_rank=12.06 ctx_cos=0.4278 lr=2.01e-05 tau=0.99774 t=35.8s
+[ETA] avg=35.9s/epoch, 47 epochs left, ~28.1 min remaining (~0.47 h)
+[epoch 103] loss=20.1528 mse=0.8767 var=0.7250 cov=0.0460 avg_std=0.6179 eff_rank=66.38 cos_sim=0.5408 ctx_eff_rank=11.92 ctx_cos=0.4246 lr=1.97e-05 tau=0.99783 t=35.7s
+[ETA] avg=35.9s/epoch, 46 epochs left, ~27.5 min remaining (~0.46 h)
+[epoch 104] loss=18.1014 mse=0.7555 var=0.6233 cov=0.0705 avg_std=0.6252 eff_rank=67.40 cos_sim=0.5230 ctx_eff_rank=12.18 ctx_cos=0.4214 lr=1.94e-05 tau=0.99791 t=35.7s
+[ETA] avg=35.9s/epoch, 45 epochs left, ~26.9 min remaining (~0.45 h)
+[epoch 105] loss=18.9681 mse=0.7936 var=0.6697 cov=0.0573 avg_std=0.6045 eff_rank=66.66 cos_sim=0.5487 ctx_eff_rank=11.48 ctx_cos=0.4346 lr=1.90e-05 tau=0.99800 t=35.7s
+[ETA] avg=35.9s/epoch, 44 epochs left, ~26.3 min remaining (~0.44 h)
+[epoch 106] loss=17.8805 mse=0.7835 var=0.5984 cov=0.0855 avg_std=0.6373 eff_rank=67.10 cos_sim=0.5081 ctx_eff_rank=11.56 ctx_cos=0.4227 lr=1.86e-05 tau=0.99808 t=35.6s
+[ETA] avg=35.9s/epoch, 43 epochs left, ~25.7 min remaining (~0.43 h)
+[epoch 107] loss=18.2038 mse=0.7144 var=0.6415 cov=0.0580 avg_std=0.5841 eff_rank=66.32 cos_sim=0.5776 ctx_eff_rank=11.89 ctx_cos=0.4567 lr=1.82e-05 tau=0.99816 t=35.6s
+[ETA] avg=35.9s/epoch, 42 epochs left, ~25.1 min remaining (~0.42 h)
+[epoch 108] loss=18.2166 mse=0.8160 var=0.6132 cov=0.0828 avg_std=0.6455 eff_rank=67.90 cos_sim=0.4930 ctx_eff_rank=11.48 ctx_cos=0.4560 lr=1.79e-05 tau=0.99825 t=35.7s
+[ETA] avg=35.9s/epoch, 41 epochs left, ~24.5 min remaining (~0.41 h)
+[epoch 109] loss=18.3227 mse=0.7213 var=0.6433 cov=0.0607 avg_std=0.5727 eff_rank=66.35 cos_sim=0.5934 ctx_eff_rank=11.25 ctx_cos=0.4355 lr=1.75e-05 tau=0.99832 t=35.7s
+[ETA] avg=35.9s/epoch, 40 epochs left, ~23.9 min remaining (~0.40 h)
+[epoch 110] loss=20.0433 mse=0.8288 var=0.6225 cov=0.1461 avg_std=0.6281 eff_rank=67.61 cos_sim=0.5197 ctx_eff_rank=9.20 ctx_cos=0.4255 lr=1.72e-05 tau=0.99840 t=35.6s
+[ETA] avg=35.9s/epoch, 39 epochs left, ~23.3 min remaining (~0.39 h)
+[epoch 111] loss=17.7679 mse=0.7158 var=0.5820 cov=0.1001 avg_std=0.6275 eff_rank=67.38 cos_sim=0.5152 ctx_eff_rank=9.65 ctx_cos=0.4865 lr=1.68e-05 tau=0.99848 t=36.0s
+[ETA] avg=35.9s/epoch, 38 epochs left, ~22.7 min remaining (~0.38 h)
+[epoch 112] loss=18.1321 mse=0.7340 var=0.6068 cov=0.0891 avg_std=0.6284 eff_rank=68.22 cos_sim=0.5194 ctx_eff_rank=9.90 ctx_cos=0.4963 lr=1.65e-05 tau=0.99855 t=35.7s
+[ETA] avg=35.9s/epoch, 37 epochs left, ~22.1 min remaining (~0.37 h)
+[epoch 113] loss=17.9055 mse=0.7233 var=0.5788 cov=0.1084 avg_std=0.6339 eff_rank=68.36 cos_sim=0.5099 ctx_eff_rank=8.97 ctx_cos=0.4693 lr=1.62e-05 tau=0.99863 t=35.6s
+[ETA] avg=35.9s/epoch, 36 epochs left, ~21.5 min remaining (~0.36 h)
+[epoch 114] loss=18.3731 mse=0.7491 var=0.6075 cov=0.0975 avg_std=0.6406 eff_rank=68.68 cos_sim=0.5013 ctx_eff_rank=8.80 ctx_cos=0.4473 lr=1.59e-05 tau=0.99870 t=35.8s
+[ETA] avg=35.9s/epoch, 35 epochs left, ~20.9 min remaining (~0.35 h)
+[epoch 115] loss=19.8307 mse=0.7975 var=0.6955 cov=0.0659 avg_std=0.6190 eff_rank=68.36 cos_sim=0.5301 ctx_eff_rank=8.57 ctx_cos=0.4577 lr=1.55e-05 tau=0.99877 t=35.6s
+[ETA] avg=35.9s/epoch, 34 epochs left, ~20.3 min remaining (~0.34 h)
+[epoch 116] loss=17.9301 mse=0.7608 var=0.5765 cov=0.1102 avg_std=0.6542 eff_rank=68.24 cos_sim=0.4788 ctx_eff_rank=8.98 ctx_cos=0.4608 lr=1.52e-05 tau=0.99884 t=35.6s
+[ETA] avg=35.9s/epoch, 33 epochs left, ~19.7 min remaining (~0.33 h)
+[epoch 117] loss=18.1041 mse=0.7110 var=0.6134 cov=0.0823 avg_std=0.6166 eff_rank=68.37 cos_sim=0.5319 ctx_eff_rank=9.47 ctx_cos=0.4688 lr=1.49e-05 tau=0.99890 t=35.7s
+[ETA] avg=35.9s/epoch, 32 epochs left, ~19.1 min remaining (~0.32 h)
+[epoch 118] loss=17.6746 mse=0.7716 var=0.5602 cov=0.1160 avg_std=0.6461 eff_rank=68.12 cos_sim=0.4921 ctx_eff_rank=9.87 ctx_cos=0.4310 lr=1.46e-05 tau=0.99897 t=35.6s
+[ETA] avg=35.9s/epoch, 31 epochs left, ~18.5 min remaining (~0.31 h)
+[epoch 119] loss=17.9749 mse=0.7330 var=0.5738 cov=0.1158 avg_std=0.6330 eff_rank=68.90 cos_sim=0.5080 ctx_eff_rank=9.48 ctx_cos=0.4193 lr=1.44e-05 tau=0.99903 t=35.5s
+[ETA] avg=35.9s/epoch, 30 epochs left, ~17.9 min remaining (~0.30 h)
+[epoch 120] loss=18.7699 mse=0.7586 var=0.5435 cov=0.1769 avg_std=0.6302 eff_rank=67.58 cos_sim=0.5174 ctx_eff_rank=9.80 ctx_cos=0.3611 lr=1.41e-05 tau=0.99909 t=35.6s
+[ETA] avg=35.9s/epoch, 29 epochs left, ~17.3 min remaining (~0.29 h)
+[epoch 121] loss=21.6439 mse=0.7564 var=0.5402 cov=0.2953 avg_std=0.6268 eff_rank=66.04 cos_sim=0.5228 ctx_eff_rank=8.01 ctx_cos=0.3346 lr=1.38e-05 tau=0.99915 t=35.6s
+[ETA] avg=35.9s/epoch, 28 epochs left, ~16.7 min remaining (~0.28 h)
+[epoch 122] loss=18.6238 mse=0.7455 var=0.5625 cov=0.1526 avg_std=0.6203 eff_rank=67.23 cos_sim=0.5317 ctx_eff_rank=10.94 ctx_cos=0.4046 lr=1.36e-05 tau=0.99921 t=35.9s
+[ETA] avg=35.9s/epoch, 27 epochs left, ~16.1 min remaining (~0.27 h)
+[epoch 123] loss=17.9342 mse=0.7358 var=0.5751 cov=0.1129 avg_std=0.6282 eff_rank=67.67 cos_sim=0.5150 ctx_eff_rank=12.01 ctx_cos=0.4335 lr=1.33e-05 tau=0.99927 t=35.5s
+[ETA] avg=35.9s/epoch, 26 epochs left, ~15.5 min remaining (~0.26 h)
+[epoch 124] loss=17.7562 mse=0.7156 var=0.5725 cov=0.1091 avg_std=0.6224 eff_rank=68.05 cos_sim=0.5226 ctx_eff_rank=12.20 ctx_cos=0.4444 lr=1.31e-05 tau=0.99932 t=35.9s
+[ETA] avg=35.9s/epoch, 25 epochs left, ~14.9 min remaining (~0.25 h)
+[epoch 125] loss=17.6910 mse=0.7377 var=0.5794 cov=0.0987 avg_std=0.6451 eff_rank=68.30 cos_sim=0.4891 ctx_eff_rank=13.05 ctx_cos=0.4242 lr=1.28e-05 tau=0.99937 t=35.7s
+[ETA] avg=35.9s/epoch, 24 epochs left, ~14.4 min remaining (~0.24 h)
+[epoch 126] loss=17.9479 mse=0.7109 var=0.5642 cov=0.1253 avg_std=0.6154 eff_rank=68.17 cos_sim=0.5318 ctx_eff_rank=11.77 ctx_cos=0.4011 lr=1.26e-05 tau=0.99942 t=35.7s
+[ETA] avg=35.9s/epoch, 23 epochs left, ~13.8 min remaining (~0.23 h)
+[epoch 127] loss=17.8954 mse=0.7270 var=0.5510 cov=0.1357 avg_std=0.6189 eff_rank=67.39 cos_sim=0.5268 ctx_eff_rank=10.52 ctx_cos=0.4475 lr=1.24e-05 tau=0.99947 t=35.7s
+[ETA] avg=35.9s/epoch, 22 epochs left, ~13.2 min remaining (~0.22 h)
+[epoch 128] loss=17.6468 mse=0.7099 var=0.5760 cov=0.1015 avg_std=0.6190 eff_rank=67.23 cos_sim=0.5251 ctx_eff_rank=11.59 ctx_cos=0.4839 lr=1.22e-05 tau=0.99952 t=35.8s
+[ETA] avg=35.9s/epoch, 21 epochs left, ~12.6 min remaining (~0.21 h)
+[epoch 129] loss=17.7238 mse=0.7010 var=0.5903 cov=0.0906 avg_std=0.6228 eff_rank=67.58 cos_sim=0.5245 ctx_eff_rank=11.57 ctx_cos=0.5377 lr=1.20e-05 tau=0.99956 t=36.0s
+[ETA] avg=35.9s/epoch, 20 epochs left, ~12.0 min remaining (~0.20 h)
+[epoch 130] loss=17.5845 mse=0.6881 var=0.5824 cov=0.0934 avg_std=0.6253 eff_rank=67.62 cos_sim=0.5176 ctx_eff_rank=11.30 ctx_cos=0.5444 lr=1.18e-05 tau=0.99960 t=1021.7s
+[ETA] avg=43.4s/epoch, 19 epochs left, ~13.7 min remaining (~0.23 h)
+[epoch 131] loss=17.5905 mse=0.6869 var=0.5830 cov=0.0932 avg_std=0.6294 eff_rank=68.27 cos_sim=0.5155 ctx_eff_rank=11.41 ctx_cos=0.5634 lr=1.16e-05 tau=0.99964 t=999.4s
+[ETA] avg=50.6s/epoch, 18 epochs left, ~15.2 min remaining (~0.25 h)
+[epoch 132] loss=17.6705 mse=0.6683 var=0.5901 cov=0.0900 avg_std=0.6247 eff_rank=68.05 cos_sim=0.5215 ctx_eff_rank=11.61 ctx_cos=0.5938 lr=1.14e-05 tau=0.99968 t=35.2s
+[ETA] avg=50.5s/epoch, 17 epochs left, ~14.3 min remaining (~0.24 h)
+[epoch 133] loss=17.7910 mse=0.6826 var=0.5813 cov=0.1031 avg_std=0.6371 eff_rank=68.17 cos_sim=0.5061 ctx_eff_rank=9.62 ctx_cos=0.6096 lr=1.13e-05 tau=0.99972 t=423.9s
+[ETA] avg=53.3s/epoch, 16 epochs left, ~14.2 min remaining (~0.24 h)
+[epoch 134] loss=20.7791 mse=0.6724 var=0.5609 cov=0.2434 avg_std=0.6231 eff_rank=66.99 cos_sim=0.5270 ctx_eff_rank=6.46 ctx_cos=0.6230 lr=1.11e-05 tau=0.99975 t=40.7s
+[ETA] avg=53.2s/epoch, 15 epochs left, ~13.3 min remaining (~0.22 h)
+[epoch 135] loss=18.8070 mse=0.6687 var=0.5579 cov=0.1676 avg_std=0.6165 eff_rank=67.44 cos_sim=0.5328 ctx_eff_rank=8.44 ctx_cos=0.5311 lr=1.10e-05 tau=0.99978 t=305.9s
+[ETA] avg=55.1s/epoch, 14 epochs left, ~12.9 min remaining (~0.21 h)
+[epoch 136] loss=17.6126 mse=0.6582 var=0.5736 cov=0.1046 avg_std=0.6263 eff_rank=66.98 cos_sim=0.5195 ctx_eff_rank=11.08 ctx_cos=0.4772 lr=1.08e-05 tau=0.99981 t=35.7s
+[ETA] avg=54.9s/epoch, 13 epochs left, ~11.9 min remaining (~0.20 h)
+[epoch 137] loss=17.6524 mse=0.6347 var=0.6023 cov=0.0784 avg_std=0.6151 eff_rank=67.39 cos_sim=0.5366 ctx_eff_rank=11.08 ctx_cos=0.4792 lr=1.07e-05 tau=0.99984 t=36.3s
+[ETA] avg=54.8s/epoch, 12 epochs left, ~11.0 min remaining (~0.18 h)
+[epoch 138] loss=17.6866 mse=0.6880 var=0.5998 cov=0.0801 avg_std=0.6262 eff_rank=67.85 cos_sim=0.5208 ctx_eff_rank=11.30 ctx_cos=0.4998 lr=1.06e-05 tau=0.99987 t=35.6s
+[ETA] avg=54.7s/epoch, 11 epochs left, ~10.0 min remaining (~0.17 h)
+[epoch 139] loss=17.6470 mse=0.6547 var=0.6069 cov=0.0728 avg_std=0.6202 eff_rank=68.04 cos_sim=0.5302 ctx_eff_rank=11.99 ctx_cos=0.5042 lr=1.05e-05 tau=0.99989 t=35.4s
+[ETA] avg=54.5s/epoch, 10 epochs left, ~9.1 min remaining (~0.15 h)
+[epoch 140] loss=18.0423 mse=0.7492 var=0.6233 cov=0.0684 avg_std=0.6079 eff_rank=67.70 cos_sim=0.5563 ctx_eff_rank=10.80 ctx_cos=0.5461 lr=1.04e-05 tau=0.99991 t=35.4s
+[ETA] avg=54.4s/epoch, 9 epochs left, ~8.2 min remaining (~0.14 h)
+[epoch 141] loss=17.9519 mse=0.7575 var=0.6223 cov=0.0655 avg_std=0.6243 eff_rank=67.59 cos_sim=0.5304 ctx_eff_rank=12.23 ctx_cos=0.5304 lr=1.03e-05 tau=0.99993 t=35.5s
+[ETA] avg=54.3s/epoch, 8 epochs left, ~7.2 min remaining (~0.12 h)
+[epoch 142] loss=18.1783 mse=0.7334 var=0.6433 cov=0.0545 avg_std=0.6027 eff_rank=67.14 cos_sim=0.5618 ctx_eff_rank=11.47 ctx_cos=0.5511 lr=1.02e-05 tau=0.99995 t=35.4s
+[ETA] avg=54.1s/epoch, 7 epochs left, ~6.3 min remaining (~0.11 h)
+[epoch 143] loss=18.1620 mse=0.8007 var=0.6356 cov=0.0588 avg_std=0.6173 eff_rank=66.91 cos_sim=0.5424 ctx_eff_rank=11.85 ctx_cos=0.5521 lr=1.02e-05 tau=0.99996 t=35.5s
+[ETA] avg=54.0s/epoch, 6 epochs left, ~5.4 min remaining (~0.09 h)
+[epoch 144] loss=17.9274 mse=0.7204 var=0.6240 cov=0.0643 avg_std=0.6092 eff_rank=67.04 cos_sim=0.5525 ctx_eff_rank=11.46 ctx_cos=0.5485 lr=1.01e-05 tau=0.99997 t=35.8s
+[ETA] avg=53.9s/epoch, 5 epochs left, ~4.5 min remaining (~0.07 h)
+[epoch 145] loss=17.9377 mse=0.7909 var=0.6216 cov=0.0643 avg_std=0.6251 eff_rank=67.00 cos_sim=0.5303 ctx_eff_rank=11.61 ctx_cos=0.5506 lr=1.01e-05 tau=0.99998 t=35.5s
+[ETA] avg=53.7s/epoch, 4 epochs left, ~3.6 min remaining (~0.06 h)
+[epoch 146] loss=17.9277 mse=0.6926 var=0.6328 cov=0.0566 avg_std=0.6042 eff_rank=67.73 cos_sim=0.5569 ctx_eff_rank=11.05 ctx_cos=0.5408 lr=1.00e-05 tau=0.99999 t=35.4s
+[ETA] avg=53.6s/epoch, 3 epochs left, ~2.7 min remaining (~0.04 h)
+[epoch 147] loss=18.1156 mse=0.8472 var=0.6274 cov=0.0633 avg_std=0.6350 eff_rank=66.82 cos_sim=0.5210 ctx_eff_rank=11.79 ctx_cos=0.5442 lr=1.00e-05 tau=1.00000 t=35.6s
+[ETA] avg=53.5s/epoch, 2 epochs left, ~1.8 min remaining (~0.03 h)
+[epoch 148] loss=17.8809 mse=0.6701 var=0.6332 cov=0.0552 avg_std=0.5659 eff_rank=67.16 cos_sim=0.6102 ctx_eff_rank=12.24 ctx_cos=0.5245 lr=1.00e-05 tau=1.00000 t=35.7s
+[ETA] avg=53.4s/epoch, 1 epochs left, ~0.9 min remaining (~0.01 h)
+[epoch 149] loss=17.9193 mse=0.8319 var=0.6123 cov=0.0712 avg_std=0.6415 eff_rank=67.13 cos_sim=0.5088 ctx_eff_rank=12.21 ctx_cos=0.5481 lr=1.00e-05 tau=1.00000 t=35.6s
+[ETA] avg=53.3s/epoch, 0 epochs left, ~0.0 min remaining (~0.00 h)
+[train] done. run_dir=/Users/lucas/Documents/Projects/world_models/world-jepa/runs/20260519_195827_iter3_full_150

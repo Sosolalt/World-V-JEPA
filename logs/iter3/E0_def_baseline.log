@@ -1,0 +1,63 @@
+[train] device=mps, data=data/default.npz, epochs=30
+[train] params total=1,391,616 trainable=920,448
+[train] reg_target=z_pred loss_fn=mse mask_ratio=0.0 cov_w=1.0 var_w=25.0 ema_tau_start=0.996
+/Users/lucas/Documents/Projects/world_models/world-jepa/mini_vjepa/losses.py:49: UserWarning: The operator 'aten::_linalg_eigh.eigenvalues' is not currently supported on the MPS backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/aten/src/ATen/mps/MPSFallback.mm:13.)
+  eigvals = torch.linalg.eigvalsh(cov)
+[epoch 000] loss=22.0852 mse=1.8980 var=0.8070 cov=0.0130 avg_std=0.2677 eff_rank=21.66 cos_sim=0.9260 lr=1.51e-05 tau=0.99600 t=35.3s
+[ETA] avg=35.3s/epoch, 29 epochs left, ~17.0 min remaining (~0.28 h)
+[epoch 001] loss=14.5698 mse=1.9279 var=0.4505 cov=1.3788 avg_std=0.8118 eff_rank=26.31 cos_sim=0.3298 lr=3.01e-05 tau=0.99600 t=33.8s
+[ETA] avg=34.5s/epoch, 28 epochs left, ~16.1 min remaining (~0.27 h)
+[epoch 002] loss=8.5452 mse=1.8611 var=0.1662 cov=2.5299 avg_std=0.9414 eff_rank=38.56 cos_sim=0.1107 lr=4.51e-05 tau=0.99600 t=33.9s
+[ETA] avg=34.3s/epoch, 27 epochs left, ~15.4 min remaining (~0.26 h)
+[epoch 003] loss=10.5679 mse=1.9041 var=0.2739 cov=1.8153 avg_std=0.9337 eff_rank=39.53 cos_sim=0.1273 lr=6.01e-05 tau=0.99600 t=34.5s
+[ETA] avg=34.4s/epoch, 26 epochs left, ~14.9 min remaining (~0.25 h)
+[epoch 004] loss=9.2298 mse=1.9231 var=0.1931 cov=2.4799 avg_std=0.9609 eff_rank=39.84 cos_sim=0.0797 lr=7.51e-05 tau=0.99601 t=34.8s
+[ETA] avg=34.4s/epoch, 25 epochs left, ~14.4 min remaining (~0.24 h)
+[epoch 005] loss=11.3588 mse=1.9210 var=0.2793 cov=2.4544 avg_std=0.9521 eff_rank=35.66 cos_sim=0.0981 lr=9.01e-05 tau=0.99601 t=34.9s
+[ETA] avg=34.5s/epoch, 24 epochs left, ~13.8 min remaining (~0.23 h)
+[epoch 006] loss=9.3569 mse=1.7692 var=0.1975 cov=2.6490 avg_std=0.9558 eff_rank=36.76 cos_sim=0.0947 lr=1.05e-04 tau=0.99602 t=35.3s
+[ETA] avg=34.6s/epoch, 23 epochs left, ~13.3 min remaining (~0.22 h)
+[epoch 007] loss=15.4876 mse=1.8227 var=0.4736 cov=1.8260 avg_std=0.8247 eff_rank=24.05 cos_sim=0.3189 lr=1.20e-04 tau=0.99602 t=36.4s
+[ETA] avg=34.8s/epoch, 22 epochs left, ~12.8 min remaining (~0.21 h)
+[epoch 008] loss=8.8800 mse=1.8175 var=0.1501 cov=3.3096 avg_std=0.9595 eff_rank=33.68 cos_sim=0.0918 lr=1.35e-04 tau=0.99603 t=35.0s
+[ETA] avg=34.9s/epoch, 21 epochs left, ~12.2 min remaining (~0.20 h)
+[epoch 009] loss=19.8019 mse=1.9736 var=0.6797 cov=0.8349 avg_std=0.5625 eff_rank=10.79 cos_sim=0.6667 lr=1.50e-04 tau=0.99604 t=34.5s
+[ETA] avg=34.8s/epoch, 20 epochs left, ~11.6 min remaining (~0.19 h)
+[epoch 010] loss=13.3940 mse=1.8039 var=0.3348 cov=3.2212 avg_std=0.7858 eff_rank=16.12 cos_sim=0.3832 lr=1.50e-04 tau=0.99604 t=34.4s
+[ETA] avg=34.8s/epoch, 19 epochs left, ~11.0 min remaining (~0.18 h)
+[epoch 011] loss=10.9668 mse=1.5158 var=0.2335 cov=3.6144 avg_std=0.8504 eff_rank=19.77 cos_sim=0.2823 lr=1.50e-04 tau=0.99605 t=34.5s
+[ETA] avg=34.8s/epoch, 18 epochs left, ~10.4 min remaining (~0.17 h)
+[epoch 012] loss=11.1372 mse=1.6993 var=0.2437 cov=3.3450 avg_std=0.8632 eff_rank=20.44 cos_sim=0.2657 lr=1.50e-04 tau=0.99606 t=34.4s
+[ETA] avg=34.7s/epoch, 17 epochs left, ~9.8 min remaining (~0.16 h)
+[epoch 013] loss=9.9340 mse=1.7140 var=0.1843 cov=3.6119 avg_std=0.8808 eff_rank=22.71 cos_sim=0.2424 lr=1.50e-04 tau=0.99607 t=34.2s
+[ETA] avg=34.7s/epoch, 16 epochs left, ~9.3 min remaining (~0.15 h)
+[epoch 014] loss=11.3501 mse=1.9381 var=0.2349 cov=3.5394 avg_std=0.8353 eff_rank=19.58 cos_sim=0.3126 lr=1.50e-04 tau=0.99609 t=34.6s
+[ETA] avg=34.7s/epoch, 15 epochs left, ~8.7 min remaining (~0.14 h)
+[epoch 015] loss=11.1238 mse=1.9148 var=0.2263 cov=3.5527 avg_std=0.8484 eff_rank=20.41 cos_sim=0.2955 lr=1.49e-04 tau=0.99610 t=33.9s
+[ETA] avg=34.6s/epoch, 14 epochs left, ~8.1 min remaining (~0.13 h)
+[epoch 016] loss=24.9247 mse=2.1563 var=0.9104 cov=0.0078 avg_std=0.1144 eff_rank=15.70 cos_sim=0.9868 lr=1.49e-04 tau=0.99611 t=34.2s
+[ETA] avg=34.6s/epoch, 13 epochs left, ~7.5 min remaining (~0.13 h)
+[epoch 017] loss=23.3385 mse=1.9136 var=0.8378 cov=0.4799 avg_std=0.4735 eff_rank=5.49 cos_sim=0.7518 lr=1.49e-04 tau=0.99613 t=34.4s
+[ETA] avg=34.6s/epoch, 12 epochs left, ~6.9 min remaining (~0.12 h)
+[epoch 018] loss=22.2554 mse=1.9252 var=0.7664 cov=1.1692 avg_std=0.2922 eff_rank=1.96 cos_sim=0.8867 lr=1.49e-04 tau=0.99614 t=33.9s
+[ETA] avg=34.6s/epoch, 11 epochs left, ~6.3 min remaining (~0.11 h)
+[epoch 019] loss=27.4544 mse=2.0058 var=0.6246 cov=9.8342 avg_std=0.3373 eff_rank=1.95 cos_sim=0.8583 lr=1.48e-04 tau=0.99616 t=33.8s
+[ETA] avg=34.5s/epoch, 10 epochs left, ~5.8 min remaining (~0.10 h)
+[epoch 020] loss=27.2478 mse=2.0614 var=0.6489 cov=8.9640 avg_std=0.3877 eff_rank=2.24 cos_sim=0.8122 lr=1.48e-04 tau=0.99618 t=33.9s
+[ETA] avg=34.5s/epoch, 9 epochs left, ~5.2 min remaining (~0.09 h)
+[epoch 021] loss=20.7694 mse=2.4999 var=0.6755 cov=1.3815 avg_std=0.3435 eff_rank=3.16 cos_sim=0.8583 lr=1.47e-04 tau=0.99619 t=33.8s
+[ETA] avg=34.5s/epoch, 8 epochs left, ~4.6 min remaining (~0.08 h)
+[epoch 022] loss=29.0192 mse=2.3553 var=0.5350 cov=13.2893 avg_std=0.4605 eff_rank=1.81 cos_sim=0.7212 lr=1.47e-04 tau=0.99621 t=34.0s
+[ETA] avg=34.4s/epoch, 7 epochs left, ~4.0 min remaining (~0.07 h)
+[anti-collapse WARNING] effective_rank<5.0 for 5 consecutive epochs (dimensional collapse)
+[epoch 023] loss=20.1367 mse=2.4190 var=0.5585 cov=3.7557 avg_std=0.4206 eff_rank=2.64 cos_sim=0.7952 lr=1.47e-04 tau=0.99623 t=34.1s
+[ETA] avg=34.4s/epoch, 6 epochs left, ~3.4 min remaining (~0.06 h)
+[anti-collapse WARNING] effective_rank<5.0 for 6 consecutive epochs (dimensional collapse)
+[epoch 024] loss=19.3140 mse=2.2571 var=0.5403 cov=3.5501 avg_std=0.4433 eff_rank=3.33 cos_sim=0.7783 lr=1.46e-04 tau=0.99625 t=34.2s
+[ETA] avg=34.4s/epoch, 5 epochs left, ~2.9 min remaining (~0.05 h)
+[anti-collapse WARNING] effective_rank<5.0 for 7 consecutive epochs (dimensional collapse)
+[epoch 025] loss=18.6242 mse=2.2421 var=0.5484 cov=2.6720 avg_std=0.4540 eff_rank=3.49 cos_sim=0.7727 lr=1.46e-04 tau=0.99627 t=34.2s
+[ETA] avg=34.4s/epoch, 4 epochs left, ~2.3 min remaining (~0.04 h)
+[anti-collapse WARNING] effective_rank<5.0 for 8 consecutive epochs (dimensional collapse)
+[anti-collapse STOP] effective_rank<5.0 for 8 epochs >= patience 8. Aborting at epoch 25.
+[train] done. run_dir=/Users/lucas/Documents/Projects/world_models/world-jepa/runs/20260519_154631_E0_def_baseline

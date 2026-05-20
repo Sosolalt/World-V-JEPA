@@ -1,0 +1,47 @@
+[eval] device=mps ckpt=runs/20260519_195827_iter3_full_150/ckpt_best.pt data=data/default.npz
+[eval] sequences=10000 train=8000 test=2000
+[eval] encoding all frames with target encoder...
+[eval] target_z shape=(10000, 32, 64, 128)
+[eval] linear probe (positions)...
+/Users/lucas/Documents/Projects/world_models/world-jepa/.venv/lib/python3.12/site-packages/sklearn/linear_model/_ridge.py:216: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.950877752207816e-08.
+  return linalg.solve(A, Xy, assume_a="pos", overwrite_a=True).T
+[eval]   positions R²=0.5672 mae=0.0891
+[eval] linear probe (velocities)...
+/Users/lucas/Documents/Projects/world_models/world-jepa/.venv/lib/python3.12/site-packages/sklearn/linear_model/_ridge.py:216: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.950877752207816e-08.
+  return linalg.solve(A, Xy, assume_a="pos", overwrite_a=True).T
+[eval]   velocities R²=0.0217 mae=0.2769
+[eval] degradation curve...
+[eval] loading pixel baseline ckpt=runs/baseline_pixel/20260519_225206//ckpt_best.pt
+[eval] encoding all frames with pixel baseline encoder...
+[eval] pixel_z shape=(10000, 32, 64, 128)
+/Users/lucas/Documents/Projects/world_models/world-jepa/.venv/lib/python3.12/site-packages/sklearn/linear_model/_ridge.py:216: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.217988707784116e-09.
+  return linalg.solve(A, Xy, assume_a="pos", overwrite_a=True).T
+/Users/lucas/Documents/Projects/world_models/world-jepa/.venv/lib/python3.12/site-packages/sklearn/linear_model/_ridge.py:216: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.217988707784116e-09.
+  return linalg.solve(A, Xy, assume_a="pos", overwrite_a=True).T
+[eval]   pixel positions R²=0.6161 velocities R²=-0.0420
+[eval] writing visualizations...
+[eval] wrote assets/results/iter3/metrics.json
+{
+  "positions_R2": 0.5671665668487549,
+  "velocities_R2": 0.021748386323451996,
+  "degradation_horizons": [
+    1,
+    2,
+    4,
+    6,
+    8,
+    10,
+    12
+  ],
+  "degradation_vjepa": [
+    0.07519757318496705,
+    0.07490262758731842,
+    0.07674156534671783,
+    0.07705107831954956,
+    0.07641919320821762,
+    0.07571098560094833,
+    0.07626242113113403
+  ],
+  "pixel_positions_R2": 0.6161280274391174,
+  "pixel_velocities_R2": -0.04199370741844177
+}

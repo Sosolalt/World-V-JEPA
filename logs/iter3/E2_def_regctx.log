@@ -1,0 +1,39 @@
+[train] device=mps, data=data/default.npz, epochs=30
+[train] params total=1,391,616 trainable=920,448
+[train] reg_target=context loss_fn=mse mask_ratio=0.0 cov_w=1.0 var_w=25.0 ema_tau_start=0.996
+/Users/lucas/Documents/Projects/world_models/world-jepa/mini_vjepa/losses.py:49: UserWarning: The operator 'aten::_linalg_eigh.eigenvalues' is not currently supported on the MPS backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/aten/src/ATen/mps/MPSFallback.mm:13.)
+  eigvals = torch.linalg.eigvalsh(cov)
+[epoch 000] loss=20.0524 mse=1.8414 var=0.2382 cov=12.2571 avg_std=0.3676 eff_rank=12.46 cos_sim=0.8553 ctx_eff_rank=6.48 ctx_cos=0.1955 lr=1.51e-05 tau=0.99600 t=35.4s
+[ETA] avg=35.4s/epoch, 29 epochs left, ~17.1 min remaining (~0.28 h)
+[epoch 001] loss=33.8414 mse=1.5900 var=0.2226 cov=26.6870 avg_std=0.3366 eff_rank=13.26 cos_sim=0.8803 ctx_eff_rank=4.66 ctx_cos=0.1822 lr=3.01e-05 tau=0.99600 t=34.0s
+[ETA] avg=34.7s/epoch, 28 epochs left, ~16.2 min remaining (~0.27 h)
+[epoch 002] loss=22.0321 mse=1.3943 var=0.2808 cov=13.6173 avg_std=0.2385 eff_rank=12.98 cos_sim=0.9387 ctx_eff_rank=5.88 ctx_cos=0.2456 lr=4.51e-05 tau=0.99600 t=34.3s
+[ETA] avg=34.6s/epoch, 27 epochs left, ~15.5 min remaining (~0.26 h)
+[epoch 003] loss=21.7723 mse=1.4454 var=0.3295 cov=12.0882 avg_std=0.2584 eff_rank=7.48 cos_sim=0.9244 ctx_eff_rank=6.68 ctx_cos=0.2296 lr=6.01e-05 tau=0.99600 t=34.4s
+[ETA] avg=34.5s/epoch, 26 epochs left, ~15.0 min remaining (~0.25 h)
+[epoch 004] loss=16.9615 mse=1.2080 var=0.4487 cov=4.5350 avg_std=0.2350 eff_rank=6.72 cos_sim=0.9366 ctx_eff_rank=6.92 ctx_cos=0.3301 lr=7.51e-05 tau=0.99601 t=34.5s
+[ETA] avg=34.5s/epoch, 25 epochs left, ~14.4 min remaining (~0.24 h)
+[epoch 005] loss=17.6241 mse=1.0291 var=0.3632 cov=7.5163 avg_std=0.3002 eff_rank=11.37 cos_sim=0.9011 ctx_eff_rank=9.14 ctx_cos=0.1826 lr=9.01e-05 tau=0.99601 t=35.3s
+[ETA] avg=34.6s/epoch, 24 epochs left, ~13.9 min remaining (~0.23 h)
+[epoch 006] loss=16.5993 mse=1.0294 var=0.4882 cov=3.3643 avg_std=0.3915 eff_rank=2.85 cos_sim=0.8011 ctx_eff_rank=4.39 ctx_cos=0.2711 lr=1.05e-04 tau=0.99602 t=35.2s
+[ETA] avg=34.7s/epoch, 23 epochs left, ~13.3 min remaining (~0.22 h)
+[epoch 007] loss=17.6978 mse=0.8681 var=0.5508 cov=3.0602 avg_std=0.4725 eff_rank=2.02 cos_sim=0.6803 ctx_eff_rank=3.64 ctx_cos=0.5740 lr=1.20e-04 tau=0.99602 t=34.3s
+[ETA] avg=34.7s/epoch, 22 epochs left, ~12.7 min remaining (~0.21 h)
+[epoch 008] loss=17.0622 mse=0.5288 var=0.5001 cov=4.0306 avg_std=0.3916 eff_rank=2.26 cos_sim=0.7959 ctx_eff_rank=3.67 ctx_cos=0.5357 lr=1.35e-04 tau=0.99603 t=34.4s
+[ETA] avg=34.6s/epoch, 21 epochs left, ~12.1 min remaining (~0.20 h)
+[epoch 009] loss=16.2989 mse=0.5442 var=0.4999 cov=3.2562 avg_std=0.3507 eff_rank=3.01 cos_sim=0.8449 ctx_eff_rank=4.40 ctx_cos=0.4879 lr=1.50e-04 tau=0.99604 t=34.2s
+[ETA] avg=34.6s/epoch, 20 epochs left, ~11.5 min remaining (~0.19 h)
+[epoch 010] loss=16.0475 mse=0.6854 var=0.4742 cov=3.5072 avg_std=0.3311 eff_rank=1.95 cos_sim=0.8498 ctx_eff_rank=4.61 ctx_cos=0.5496 lr=1.50e-04 tau=0.99604 t=34.2s
+[ETA] avg=34.6s/epoch, 19 epochs left, ~10.9 min remaining (~0.18 h)
+[anti-collapse WARNING] effective_rank<5.0 for 5 consecutive epochs (dimensional collapse)
+[epoch 011] loss=16.1904 mse=0.5052 var=0.4429 cov=4.6116 avg_std=0.3677 eff_rank=1.99 cos_sim=0.8119 ctx_eff_rank=5.89 ctx_cos=0.4358 lr=1.50e-04 tau=0.99605 t=34.3s
+[ETA] avg=34.5s/epoch, 18 epochs left, ~10.4 min remaining (~0.17 h)
+[anti-collapse WARNING] effective_rank<5.0 for 6 consecutive epochs (dimensional collapse)
+[epoch 012] loss=15.7023 mse=0.5165 var=0.3814 cov=5.6509 avg_std=0.4921 eff_rank=2.14 cos_sim=0.6828 ctx_eff_rank=5.89 ctx_cos=0.3623 lr=1.50e-04 tau=0.99606 t=33.8s
+[ETA] avg=34.5s/epoch, 17 epochs left, ~9.8 min remaining (~0.16 h)
+[anti-collapse WARNING] effective_rank<5.0 for 7 consecutive epochs (dimensional collapse)
+[epoch 013] loss=16.7352 mse=0.6571 var=0.4146 cov=5.7136 avg_std=0.5226 eff_rank=2.19 cos_sim=0.6342 ctx_eff_rank=4.94 ctx_cos=0.2089 lr=1.50e-04 tau=0.99607 t=33.8s
+[ETA] avg=34.4s/epoch, 16 epochs left, ~9.2 min remaining (~0.15 h)
+[anti-collapse WARNING] effective_rank<5.0 for 8 consecutive epochs (dimensional collapse)
+[anti-collapse STOP] effective_rank<5.0 for 8 epochs >= patience 8. Aborting at epoch 13.
+[train] done. run_dir=/Users/lucas/Documents/Projects/world_models/world-jepa/runs/20260519_160206_E2_def_regctx

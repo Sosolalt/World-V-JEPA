@@ -1,0 +1,124 @@
+[baseline-pixel] device=mps, data=data/default.npz, epochs=150
+[baseline-pixel] params encoder=471,168 predictor=449,152 decoder=665,091 total=1,585,411
+[baseline-pixel] lr_peak=2.00e-05 lr_final=1.00e-05
+[epoch 000] loss=0.069927 pixel_mse=0.069927 lr=2.01e-06 t=47.0s
+[ETA] avg=47.0s/epoch, 149 epochs left, ~116.8 min remaining (~1.95 h)
+[epoch 001] loss=0.051654 pixel_mse=0.051654 lr=4.01e-06 t=45.0s
+[ETA] avg=46.0s/epoch, 148 epochs left, ~113.4 min remaining (~1.89 h)
+[epoch 002] loss=0.048196 pixel_mse=0.048196 lr=6.01e-06 t=44.8s
+[ETA] avg=45.6s/epoch, 147 epochs left, ~111.7 min remaining (~1.86 h)
+[epoch 003] loss=0.042201 pixel_mse=0.042201 lr=8.01e-06 t=42.9s
+[ETA] avg=44.9s/epoch, 146 epochs left, ~109.3 min remaining (~1.82 h)
+[epoch 004] loss=0.042252 pixel_mse=0.042252 lr=1.00e-05 t=42.5s
+[ETA] avg=44.4s/epoch, 145 epochs left, ~107.4 min remaining (~1.79 h)
+[epoch 005] loss=0.043982 pixel_mse=0.043982 lr=1.20e-05 t=42.7s
+[ETA] avg=44.2s/epoch, 144 epochs left, ~106.0 min remaining (~1.77 h)
+[epoch 006] loss=0.043700 pixel_mse=0.043700 lr=1.40e-05 t=42.5s
+[ETA] avg=43.9s/epoch, 143 epochs left, ~104.7 min remaining (~1.74 h)
+[epoch 007] loss=0.043505 pixel_mse=0.043505 lr=1.60e-05 t=42.9s
+[ETA] avg=43.8s/epoch, 142 epochs left, ~103.6 min remaining (~1.73 h)
+[epoch 008] loss=0.037583 pixel_mse=0.037583 lr=1.80e-05 t=43.2s
+[ETA] avg=43.7s/epoch, 141 epochs left, ~102.8 min remaining (~1.71 h)
+[epoch 009] loss=0.039048 pixel_mse=0.039048 lr=2.00e-05 t=42.6s
+[ETA] avg=43.6s/epoch, 140 epochs left, ~101.8 min remaining (~1.70 h)
+[epoch 010] loss=0.038278 pixel_mse=0.038278 lr=2.00e-05 t=42.6s
+[ETA] avg=43.5s/epoch, 139 epochs left, ~100.8 min remaining (~1.68 h)
+[epoch 011] loss=0.039756 pixel_mse=0.039756 lr=2.00e-05 t=42.4s
+[ETA] avg=43.4s/epoch, 138 epochs left, ~99.9 min remaining (~1.67 h)
+[epoch 012] loss=0.039759 pixel_mse=0.039759 lr=2.00e-05 t=42.4s
+[ETA] avg=43.4s/epoch, 137 epochs left, ~99.0 min remaining (~1.65 h)
+[epoch 013] loss=0.036148 pixel_mse=0.036148 lr=2.00e-05 t=42.4s
+[ETA] avg=43.3s/epoch, 136 epochs left, ~98.1 min remaining (~1.64 h)
+[epoch 014] loss=0.036503 pixel_mse=0.036503 lr=2.00e-05 t=42.4s
+[ETA] avg=43.2s/epoch, 135 epochs left, ~97.3 min remaining (~1.62 h)
+[epoch 015] loss=0.037559 pixel_mse=0.037559 lr=2.00e-05 t=42.4s
+[ETA] avg=43.2s/epoch, 134 epochs left, ~96.4 min remaining (~1.61 h)
+[epoch 016] loss=0.033766 pixel_mse=0.033766 lr=1.99e-05 t=42.5s
+[ETA] avg=43.1s/epoch, 133 epochs left, ~95.6 min remaining (~1.59 h)
+[epoch 017] loss=0.035709 pixel_mse=0.035709 lr=1.99e-05 t=42.9s
+[ETA] avg=43.1s/epoch, 132 epochs left, ~94.9 min remaining (~1.58 h)
+[epoch 018] loss=0.036507 pixel_mse=0.036507 lr=1.99e-05 t=42.8s
+[ETA] avg=43.1s/epoch, 131 epochs left, ~94.1 min remaining (~1.57 h)
+[epoch 019] loss=0.033750 pixel_mse=0.033750 lr=1.99e-05 t=42.6s
+[ETA] avg=43.1s/epoch, 130 epochs left, ~93.3 min remaining (~1.56 h)
+[epoch 020] loss=0.039275 pixel_mse=0.039275 lr=1.98e-05 t=42.5s
+[ETA] avg=43.1s/epoch, 129 epochs left, ~92.6 min remaining (~1.54 h)
+[epoch 021] loss=0.033621 pixel_mse=0.033621 lr=1.98e-05 t=42.6s
+[ETA] avg=43.0s/epoch, 128 epochs left, ~91.8 min remaining (~1.53 h)
+[epoch 022] loss=0.032255 pixel_mse=0.032255 lr=1.98e-05 t=42.6s
+[ETA] avg=43.0s/epoch, 127 epochs left, ~91.0 min remaining (~1.52 h)
+[epoch 023] loss=0.032314 pixel_mse=0.032314 lr=1.98e-05 t=42.3s
+[ETA] avg=43.0s/epoch, 126 epochs left, ~90.3 min remaining (~1.50 h)
+[epoch 024] loss=0.031778 pixel_mse=0.031778 lr=1.97e-05 t=43.3s
+[ETA] avg=43.0s/epoch, 125 epochs left, ~89.6 min remaining (~1.49 h)
+[epoch 025] loss=0.028772 pixel_mse=0.028772 lr=1.97e-05 t=42.7s
+[ETA] avg=43.0s/epoch, 124 epochs left, ~88.8 min remaining (~1.48 h)
+[epoch 026] loss=0.025312 pixel_mse=0.025312 lr=1.96e-05 t=42.6s
+[ETA] avg=43.0s/epoch, 123 epochs left, ~88.1 min remaining (~1.47 h)
+[epoch 027] loss=0.026389 pixel_mse=0.026389 lr=1.96e-05 t=42.4s
+[ETA] avg=43.0s/epoch, 122 epochs left, ~87.3 min remaining (~1.46 h)
+[epoch 028] loss=0.025374 pixel_mse=0.025374 lr=1.96e-05 t=42.6s
+[ETA] avg=42.9s/epoch, 121 epochs left, ~86.6 min remaining (~1.44 h)
+[epoch 029] loss=0.021884 pixel_mse=0.021884 lr=1.95e-05 t=42.5s
+[ETA] avg=42.9s/epoch, 120 epochs left, ~85.8 min remaining (~1.43 h)
+[epoch 030] loss=0.022633 pixel_mse=0.022633 lr=1.95e-05 t=42.8s
+[ETA] avg=42.9s/epoch, 119 epochs left, ~85.1 min remaining (~1.42 h)
+[epoch 031] loss=0.023473 pixel_mse=0.023473 lr=1.94e-05 t=42.8s
+[ETA] avg=42.9s/epoch, 118 epochs left, ~84.4 min remaining (~1.41 h)
+[epoch 032] loss=0.020368 pixel_mse=0.020368 lr=1.93e-05 t=42.9s
+[ETA] avg=42.9s/epoch, 117 epochs left, ~83.7 min remaining (~1.39 h)
+[epoch 033] loss=0.020136 pixel_mse=0.020136 lr=1.93e-05 t=43.1s
+[ETA] avg=42.9s/epoch, 116 epochs left, ~83.0 min remaining (~1.38 h)
+[epoch 034] loss=0.019752 pixel_mse=0.019752 lr=1.92e-05 t=43.0s
+[ETA] avg=42.9s/epoch, 115 epochs left, ~82.3 min remaining (~1.37 h)
+[epoch 035] loss=0.019757 pixel_mse=0.019757 lr=1.92e-05 t=42.8s
+[ETA] avg=42.9s/epoch, 114 epochs left, ~81.5 min remaining (~1.36 h)
+[epoch 036] loss=0.020755 pixel_mse=0.020755 lr=1.91e-05 t=44.1s
+[ETA] avg=43.0s/epoch, 113 epochs left, ~80.9 min remaining (~1.35 h)
+[epoch 037] loss=0.018723 pixel_mse=0.018723 lr=1.90e-05 t=43.9s
+[ETA] avg=43.0s/epoch, 112 epochs left, ~80.2 min remaining (~1.34 h)
+[epoch 038] loss=0.017858 pixel_mse=0.017858 lr=1.90e-05 t=43.6s
+[ETA] avg=43.0s/epoch, 111 epochs left, ~79.5 min remaining (~1.33 h)
+[epoch 039] loss=0.017543 pixel_mse=0.017543 lr=1.89e-05 t=43.4s
+[ETA] avg=43.0s/epoch, 110 epochs left, ~78.8 min remaining (~1.31 h)
+[epoch 040] loss=0.017745 pixel_mse=0.017745 lr=1.88e-05 t=43.2s
+[ETA] avg=43.0s/epoch, 109 epochs left, ~78.1 min remaining (~1.30 h)
+[epoch 041] loss=0.016066 pixel_mse=0.016066 lr=1.88e-05 t=43.6s
+[ETA] avg=43.0s/epoch, 108 epochs left, ~77.4 min remaining (~1.29 h)
+[epoch 042] loss=0.014994 pixel_mse=0.014994 lr=1.87e-05 t=43.4s
+[ETA] avg=43.0s/epoch, 107 epochs left, ~76.7 min remaining (~1.28 h)
+[epoch 043] loss=0.014654 pixel_mse=0.014654 lr=1.86e-05 t=43.5s
+[ETA] avg=43.0s/epoch, 106 epochs left, ~76.0 min remaining (~1.27 h)
+[epoch 044] loss=0.014698 pixel_mse=0.014698 lr=1.85e-05 t=43.2s
+[ETA] avg=43.0s/epoch, 105 epochs left, ~75.3 min remaining (~1.26 h)
+[epoch 045] loss=0.014828 pixel_mse=0.014828 lr=1.85e-05 t=43.2s
+[ETA] avg=43.0s/epoch, 104 epochs left, ~74.6 min remaining (~1.24 h)
+[epoch 046] loss=0.015893 pixel_mse=0.015893 lr=1.84e-05 t=44.1s
+[ETA] avg=43.1s/epoch, 103 epochs left, ~73.9 min remaining (~1.23 h)
+[epoch 047] loss=0.016286 pixel_mse=0.016286 lr=1.83e-05 t=43.7s
+[ETA] avg=43.1s/epoch, 102 epochs left, ~73.2 min remaining (~1.22 h)
+[epoch 048] loss=0.015719 pixel_mse=0.015719 lr=1.82e-05 t=44.0s
+[ETA] avg=43.1s/epoch, 101 epochs left, ~72.6 min remaining (~1.21 h)
+[epoch 049] loss=0.016948 pixel_mse=0.016948 lr=1.81e-05 t=44.5s
+[ETA] avg=43.1s/epoch, 100 epochs left, ~71.9 min remaining (~1.20 h)
+[epoch 050] loss=0.017948 pixel_mse=0.017948 lr=1.80e-05 t=44.1s
+[ETA] avg=43.1s/epoch, 99 epochs left, ~71.2 min remaining (~1.19 h)
+[epoch 051] loss=0.016455 pixel_mse=0.016455 lr=1.79e-05 t=44.8s
+[ETA] avg=43.2s/epoch, 98 epochs left, ~70.5 min remaining (~1.18 h)
+[epoch 052] loss=0.015996 pixel_mse=0.015996 lr=1.78e-05 t=44.3s
+[ETA] avg=43.2s/epoch, 97 epochs left, ~69.8 min remaining (~1.16 h)
+[epoch 053] loss=0.016071 pixel_mse=0.016071 lr=1.78e-05 t=43.1s
+[ETA] avg=43.2s/epoch, 96 epochs left, ~69.1 min remaining (~1.15 h)
+[epoch 054] loss=0.015590 pixel_mse=0.015590 lr=1.77e-05 t=43.4s
+[ETA] avg=43.2s/epoch, 95 epochs left, ~68.4 min remaining (~1.14 h)
+[epoch 055] loss=0.015090 pixel_mse=0.015090 lr=1.76e-05 t=43.2s
+[ETA] avg=43.2s/epoch, 94 epochs left, ~67.7 min remaining (~1.13 h)
+[epoch 056] loss=0.014072 pixel_mse=0.014072 lr=1.75e-05 t=43.2s
+[ETA] avg=43.2s/epoch, 93 epochs left, ~67.0 min remaining (~1.12 h)
+[epoch 057] loss=0.013423 pixel_mse=0.013423 lr=1.74e-05 t=42.8s
+[ETA] avg=43.2s/epoch, 92 epochs left, ~66.2 min remaining (~1.10 h)
+[epoch 058] loss=0.014646 pixel_mse=0.014646 lr=1.73e-05 t=43.0s
+[ETA] avg=43.2s/epoch, 91 epochs left, ~65.5 min remaining (~1.09 h)
+[epoch 059] loss=0.014119 pixel_mse=0.014119 lr=1.72e-05 t=42.7s
+[ETA] avg=43.2s/epoch, 90 epochs left, ~64.8 min remaining (~1.08 h)
+[baseline-pixel] non-finite loss at epoch 60 batch 2; aborting run

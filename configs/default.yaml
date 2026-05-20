@@ -38,7 +38,12 @@
 #   ema_tau_end (float)               EMA decay at training end (cosine schedule)
 #   var_loss_weight (float)           VICReg variance term weight
 #   cov_loss_weight (float)           VICReg covariance term weight (decorrelates dims)
+#   reg_target (str)                  "z_pred" | "context" | "both"; where var/cov reg is applied
+#   loss_fn (str)                     "mse" | "smooth_l1"; prediction-vs-target loss
+#   mask_ratio (float)                Fraction of context tokens replaced with the learned
+#                                     mask_token before the predictor (V-JEPA-style asymmetry)
 #   collapse_eff_rank_threshold       effective_rank below this counts as collapsed
+#                                     (applied to BOTH z_pred and ctx_effective_rank)
 #   collapse_patience_epochs          abort training after this many consecutive collapsed epochs
 #   checkpoint_every (int)            save a checkpoint every N epochs
 #   max_checkpoints (int)             max number of checkpoints kept on disk
@@ -77,16 +82,40 @@ model:
 training:
   batch_size: 64
   epochs: 150
-  lr_peak: 1.5e-4
+  # iter-3: lr_peak lowered from 1.5e-4 to 5e-5 after E_lowlr showed it
+  # eliminates the late-stage z_pred volatility seen in E7 at the higher rate
+  # (z_pred went 79->7->14 over ep27-29 at 1.5e-4; at 5e-5 it stays 60-80).
+  lr_peak: 5.0e-5
   lr_final: 1.0e-5
   warmup_epochs: 10
   weight_decay_encoder: 0.05
   weight_decay_predictor: 0.0
   grad_clip: 1.0
-  ema_tau_start: 0.996
+  # iter-3: per-element value clip on top of grad-norm clip. The kitchen-sink
+  # loss surface has occasional batch-level numerical spikes (validation v1
+  # hit a non-finite loss at ep20 batch 3 in one of two runs; pure
+  # stochasticity but the NaN-abort catches it. Value clip provides a second
+  # line of defense without altering normal training.)
+  grad_value_clip: 0.5
+  # iter-3: ema_tau_start dropped from 0.996 -> 0.99. A near-static target
+  # encoder makes the "match a constant" trivial solution too easy.
+  ema_tau_start: 0.99
   ema_tau_end: 1.0
   var_loss_weight: 25.0
-  cov_loss_weight: 1.0
+  # iter-3: cov_loss_weight raised from 1.0 -> 25.0 so the cov gradient
+  # matches the var gradient in magnitude (cov at d=128 is naturally smaller
+  # than at the d=8192 VICReg paper's scale, so weight 1 was undersized).
+  cov_loss_weight: 25.0
+  # iter-3: reg_target switched from default (z_pred only) to "both".
+  # Applying var/cov reg only to z_pred lets the predictor satisfy the
+  # constraint via its own pos_embed + query_tokens + mask_token while the
+  # encoder collapses silently (see strategies_log.md E4 case study).
+  reg_target: both
+  # iter-3: mask 75% of context tokens before the predictor sees them. This
+  # is V-JEPA's canonical anti-collapse asymmetry, adapted to our token-level
+  # context. Disabling all four iter-3 changes reverts to iter-2 behavior.
+  mask_ratio: 0.75
+  loss_fn: mse
   collapse_eff_rank_threshold: 5.0
   collapse_patience_epochs: 8
   checkpoint_every: 25
@@ -94,6 +123,11 @@ training:
   seed: 42
 
 baseline_overrides:
-  lr_peak: 5.0e-5
+  # iter-3: dropped from 5e-5 -> 2e-5 after iter-3 attempt #1 NaN'd at ep40
+  # with 5e-5 + clamp output. The model was training healthily (pixel_mse
+  # dropping 0.018 -> 0.015) right up to the NaN, so it's a one-off numerical
+  # edge from a bad batch + AdamW state, not a training failure. 2e-5 + value
+  # clip should absorb it.
+  lr_peak: 2.0e-5
   grad_clip: 1.0
   grad_value_clip: 0.5
