@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mini-vjepa"
+version = "0.1.0"
+description = "From-scratch V-JEPA implementation for 2D billiard dynamics in latent space."
+requires-python = ">=3.10"
+license = { text = "MIT" }
+readme = "README.md"
+
+[tool.setuptools.packages.find]
+include = ["mini_vjepa*"]
+exclude = ["tests*", "scripts*", "simulation*", "baselines*", "notebooks*", "configs*", "data*", "assets*"]
