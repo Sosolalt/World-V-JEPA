@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gc
 import json
 import math
 import os
@@ -949,6 +950,21 @@ def find_train_metrics_csv(ckpt_path: Path) -> Path | None:
     return None
 
 
+def _subsample_store(store: FrameStore, indices: np.ndarray, strategies: np.ndarray | None
+                     ) -> tuple[FrameStore, np.ndarray | None]:
+    """Return a memory-aligned subset of `store` containing only `indices`.
+    The full 10K-sequence dataset (10.5 GB per encoder latent at 128-dim,
+    38 GB per context-window cache) does not fit in 20 GB of RAM. The probes
+    are statistically saturated well below 10K sequences anyway."""
+    sub = FrameStore(
+        frames=np.ascontiguousarray(store.frames[indices]),
+        positions=np.ascontiguousarray(store.positions[indices]),
+        velocities=np.ascontiguousarray(store.velocities[indices]),
+    )
+    sub_strategies = None if strategies is None else strategies[indices]
+    return sub, sub_strategies
+
+
 def run_evaluation(
     ckpt_path: str,
     data_path: str,
@@ -956,7 +972,10 @@ def run_evaluation(
     out_dir: str,
     pixel_ckpt_path: str | None = None,
     horizons: list[int] | None = None,
+    max_eval_sequences: int = 2000,
+    ram_limit_gb: float | None = None,
 ) -> dict:
+    cap_process_memory(ram_limit_gb)
     set_seed(SEED)
     device = select_device()
     cfg = load_config(config_path)
@@ -968,77 +987,242 @@ def run_evaluation(
 
     print(f"[eval] device={device} ckpt={ckpt_path} data={data_path}", flush=True)
     dataset = BilliardDataset(data_path)
-    store = load_frames(dataset)
-    n_seq = len(dataset)
-    train_idx, test_idx = split_indices(n_seq, train_frac=0.8)
+    n_seq_full = len(dataset)
+
+    # Stride-subsample BEFORE materializing any (N, T, 3, H, W) array. V1
+    # called load_frames (transpose + ascontiguousarray = full copy, 1.2 GB
+    # at 10K seqs) on the full dataset and then subsampled — paying for both
+    # the dataset.frames original AND the transposed copy in memory.
+    if n_seq_full > max_eval_sequences:
+        stride = max(1, n_seq_full // max_eval_sequences)
+        keep = np.arange(0, n_seq_full, stride)[:max_eval_sequences]
+        print(
+            f"[eval] subsampling {n_seq_full} -> {len(keep)} sequences "
+            f"(stride={stride}) to fit memory budget; pass --max-eval-sequences "
+            f"to override",
+            flush=True,
+        )
+    else:
+        keep = np.arange(n_seq_full)
+    n_seq = len(keep)
+
+    # Build the in-memory store from the subset only. Transpose (H,W,3) →
+    # (3,H,W) on the subset, not the full dataset.
+    sub_frames = np.ascontiguousarray(
+        np.transpose(dataset.frames[keep], (0, 1, 4, 2, 3))
+    )
+    sub_positions = np.ascontiguousarray(dataset.positions[keep])
+    sub_velocities = np.ascontiguousarray(dataset.velocities[keep])
+    sub_strategies = None if dataset.strategies is None else dataset.strategies[keep]
+    store = FrameStore(
+        frames=sub_frames, positions=sub_positions, velocities=sub_velocities
+    )
+    # Drop the BilliardDataset reference so the full-dataset numpy arrays
+    # (1.2 GB at 10K seqs) get reclaimed. The npz mmap is also released.
+    del dataset
+    gc.collect()
+
+    train_idx, test_idx = shuffled_split_indices(n_seq, train_frac=0.8, seed=SEED)
     print(f"[eval] sequences={n_seq} train={len(train_idx)} test={len(test_idx)}", flush=True)
+    context_frames = int(cfg["model"]["context_frames"])
 
     model = load_vjepa(ckpt_path, cfg, device)
 
-    print("[eval] encoding all frames with target encoder...", flush=True)
+    def _free_gpu():
+        gc.collect()
+        if device.type == "mps":
+            torch.mps.empty_cache()
+
+    # --- Phase A: EMA target encoder ---
+    # Keep target_z around longer than the others: degradation, rollout, PCA
+    # and t-SNE plots all need it.
+    print("[eval] encoding frames with EMA target encoder...", flush=True)
     target_z = encode_all_frames_target(model, store, device)
     print(f"[eval] target_z shape={target_z.shape}", flush=True)
+    pos_probe_target = linear_probe(target_z, store.positions, train_idx, test_idx)
+    vel_probe_target = linear_probe(target_z, store.velocities, train_idx, test_idx)
+    print(
+        f"[eval]   target/positions R²={pos_probe_target['overall_r2']:.4f} "
+        f"target/velocities R²={vel_probe_target['overall_r2']:.4f}",
+        flush=True,
+    )
 
-    print("[eval] linear probe (positions)...", flush=True)
-    pos_probe = linear_probe(target_z, store.positions, train_idx, test_idx)
-    print(f"[eval]   positions R²={pos_probe['overall_r2']:.4f} mae={pos_probe['mae']:.4f}", flush=True)
+    # --- Phase B: V-JEPA online encoder ---
+    print("[eval] encoding frames with online encoder...", flush=True)
+    online_z = encode_all_frames_online(model, store, device)
+    pos_probe_online = linear_probe(online_z, store.positions, train_idx, test_idx)
+    vel_probe_online = linear_probe(online_z, store.velocities, train_idx, test_idx)
+    print(
+        f"[eval]   online/positions R²={pos_probe_online['overall_r2']:.4f} "
+        f"online/velocities R²={vel_probe_online['overall_r2']:.4f}",
+        flush=True,
+    )
+    del online_z  # not needed for plotting or further probes
+    _free_gpu()
 
-    print("[eval] linear probe (velocities)...", flush=True)
-    vel_probe = linear_probe(target_z, store.velocities, train_idx, test_idx)
-    print(f"[eval]   velocities R²={vel_probe['overall_r2']:.4f} mae={vel_probe['mae']:.4f}", flush=True)
+    # --- Phase C: 4-frame context window (physically valid velocity probe) ---
+    print(f"[eval] encoding 4-frame context windows (V-JEPA's native repr.)...",
+          flush=True)
+    ctx_z = encode_all_context_windows(model, store, device, context_frames=context_frames)
+    print(f"[eval] ctx_z shape={ctx_z.shape}", flush=True)
+    pos_probe_ctx = context_window_probe(
+        ctx_z, store.positions, train_idx, test_idx, context_frames=context_frames
+    )
+    vel_probe_ctx = context_window_probe(
+        ctx_z, store.velocities, train_idx, test_idx, context_frames=context_frames
+    )
+    print(
+        f"[eval]   ctx-window/positions R²={pos_probe_ctx['overall_r2']:.4f} "
+        f"ctx-window/velocities R²={vel_probe_ctx['overall_r2']:.4f} (α={vel_probe_ctx['alpha']:.2g})",
+        flush=True,
+    )
 
-    print("[eval] degradation curve...", flush=True)
+    # --- Phase D: held-out-by-strategy probes (reuse target_z + ctx_z) ---
+    regime = regime_split_indices(sub_strategies)
+    regime_metrics: dict | None = None
+    if regime is not None:
+        r_train, r_test = regime
+        print(
+            f"[eval] held-out-regime probe (test=random_velocities): "
+            f"train={len(r_train)} test={len(r_test)}",
+            flush=True,
+        )
+        regime_metrics = {
+            "held_out": ["random_velocities"],
+            "n_train": int(len(r_train)),
+            "n_test": int(len(r_test)),
+            "target": {
+                "positions": linear_probe(target_z, store.positions, r_train, r_test),
+                "velocities": linear_probe(target_z, store.velocities, r_train, r_test),
+            },
+            "ctx_window": {
+                "positions": context_window_probe(
+                    ctx_z, store.positions, r_train, r_test, context_frames=context_frames
+                ),
+                "velocities": context_window_probe(
+                    ctx_z, store.velocities, r_train, r_test, context_frames=context_frames
+                ),
+            },
+        }
+        print(
+            f"[eval]   regime/target/positions R²="
+            f"{regime_metrics['target']['positions']['overall_r2']:.4f} "
+            f"regime/ctx-window/velocities R²="
+            f"{regime_metrics['ctx_window']['velocities']['overall_r2']:.4f}",
+            flush=True,
+        )
+    else:
+        print("[eval] held-out-regime probe: skipped (strategies metadata absent)",
+              flush=True)
+
+    # ctx_z (the largest single array) is no longer needed.
+    del ctx_z
+    _free_gpu()
+
+    # --- Phase E: degradation + rollout — these use `model` directly ---
+    print("[eval] degradation curve (cos sim, multi-t_start averaged)...", flush=True)
     deg = degradation_curve(model, store, test_idx, target_z, device, horizons, cfg)
+    print("[eval] rollout MAE (probe-decoded positions, multi-t_start)...", flush=True)
+    roll = rollout_position_error(
+        model, store, train_idx, test_idx, target_z, device, horizons, cfg
+    )
 
     metrics: dict = {
         "ckpt": str(ckpt_path),
         "data": str(data_path),
         "config": str(config_path),
         "seed": SEED,
-        "n_sequences": int(n_seq),
+        "n_sequences_dataset": int(n_seq_full),
+        "n_sequences_evaluated": int(n_seq),
+        "max_eval_sequences": int(max_eval_sequences),
         "n_train": int(len(train_idx)),
         "n_test": int(len(test_idx)),
         "vjepa": {
-            "positions": pos_probe,
-            "velocities": vel_probe,
+            "positions": pos_probe_target,
+            "velocities": vel_probe_target,
+            "positions_online": pos_probe_online,
+            "velocities_online": vel_probe_online,
+            "positions_ctx_window": pos_probe_ctx,
+            "velocities_ctx_window": vel_probe_ctx,
         },
         "degradation": deg,
+        "rollout_mae": roll,
     }
+    if regime_metrics is not None:
+        metrics["regime_held_out"] = regime_metrics
 
+    # --- Phase F: pixel baseline (own encoder lifecycle) ---
     pixel_probe_results = None
     pixel_z = None
     if pixel_ckpt_path is not None:
         print(f"[eval] loading pixel baseline ckpt={pixel_ckpt_path}", flush=True)
         pixel_model = load_pixel(pixel_ckpt_path, cfg, device)
-        print("[eval] encoding all frames with pixel baseline encoder...", flush=True)
+
+        print("[eval] encoding frames with pixel baseline encoder...", flush=True)
         pixel_z = encode_all_frames_pixel(pixel_model, store, device)
-        print(f"[eval] pixel_z shape={pixel_z.shape}", flush=True)
         pix_pos = linear_probe(pixel_z, store.positions, train_idx, test_idx)
         pix_vel = linear_probe(pixel_z, store.velocities, train_idx, test_idx)
+
+        print("[eval] encoding 4-frame context windows (pixel baseline)...", flush=True)
+        pixel_ctx_z = encode_all_context_windows_pixel(
+            pixel_model, store, device, context_frames=context_frames
+        )
+        pix_pos_ctx = context_window_probe(
+            pixel_ctx_z, store.positions, train_idx, test_idx, context_frames=context_frames
+        )
+        pix_vel_ctx = context_window_probe(
+            pixel_ctx_z, store.velocities, train_idx, test_idx, context_frames=context_frames
+        )
+
         metrics["pixel"] = {
             "positions": pix_pos,
             "velocities": pix_vel,
+            "positions_ctx_window": pix_pos_ctx,
+            "velocities_ctx_window": pix_vel_ctx,
             "ckpt": str(pixel_ckpt_path),
         }
+        if regime is not None:
+            r_train, r_test = regime
+            metrics["pixel"]["regime_held_out"] = {
+                "per_frame": {
+                    "positions": linear_probe(pixel_z, store.positions, r_train, r_test),
+                    "velocities": linear_probe(pixel_z, store.velocities, r_train, r_test),
+                },
+                "ctx_window": {
+                    "positions": context_window_probe(
+                        pixel_ctx_z, store.positions, r_train, r_test, context_frames=context_frames
+                    ),
+                    "velocities": context_window_probe(
+                        pixel_ctx_z, store.velocities, r_train, r_test, context_frames=context_frames
+                    ),
+                },
+            }
+        # Free the bigger one immediately; we still need pixel_z for the
+        # side-by-side PCA plot below.
+        del pixel_ctx_z
+        _free_gpu()
+
         pixel_probe_results = {
-            "vjepa": {"positions": pos_probe, "velocities": vel_probe},
+            "vjepa": {"positions": pos_probe_target, "velocities": vel_probe_target},
             "pixel": {"positions": pix_pos, "velocities": pix_vel},
         }
         print(
-            f"[eval]   pixel positions R²={pix_pos['overall_r2']:.4f} "
-            f"velocities R²={pix_vel['overall_r2']:.4f}",
+            f"[eval]   pixel/per-frame/positions R²={pix_pos['overall_r2']:.4f} "
+            f"pixel/ctx-window/velocities R²={pix_vel_ctx['overall_r2']:.4f}",
             flush=True,
         )
 
     print("[eval] writing visualizations...", flush=True)
     plot_latent_pca_trajectory(target_z, store, out / "latent_pca_trajectory.png")
     plot_degradation_curve(deg, out / "degradation_curve.png")
+    plot_rollout_mae(roll, out / "rollout_mae.png")
     plot_tsne_by_speed(target_z, store, out / "tsne_by_speed.png")
     plot_training_curves(find_train_metrics_csv(Path(ckpt_path)), out / "training_curves.png")
     if pixel_z is not None and pixel_probe_results is not None:
         plot_jepa_vs_pixel(
             target_z, pixel_z, store, pixel_probe_results, out / "jepa_vs_pixel.png"
         )
+        plot_probe_grid(metrics, out / "probe_grid.png")
 
     metrics_path = out / "metrics.json"
     with open(metrics_path, "w") as f:
@@ -1061,6 +1245,16 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--out", default="assets/results/", type=str, help="Output directory")
     p.add_argument("--pixel-ckpt", default=None, type=str,
                    help="Optional pixel-baseline checkpoint for side-by-side comparison")
+    p.add_argument("--max-eval-sequences", default=800, type=int,
+                   help="Stride-subsample the dataset to at most this many sequences "
+                        "before encoding. Bounds peak RAM (default 800 -> ~9 GB "
+                        "peak with the lsqr context-window solver). Pass a larger "
+                        "value to opt into more data and tighter R² estimates.")
+    p.add_argument("--ram-limit-gb", default=None, type=float,
+                   help="Hard-cap this process's virtual address space (RLIMIT_AS). "
+                        "If exceeded the script raises MemoryError instead of "
+                        "exhausting system RAM. Defense-in-depth only — pair with "
+                        "--max-eval-sequences if your workload genuinely needs less.")
     return p.parse_args()
 
 
@@ -1072,21 +1266,42 @@ def main() -> int:
         config_path=args.config,
         out_dir=args.out,
         pixel_ckpt_path=args.pixel_ckpt,
+        max_eval_sequences=args.max_eval_sequences,
+        ram_limit_gb=args.ram_limit_gb,
     )
     print(json.dumps(_summary(metrics), indent=2), flush=True)
     return 0
 
 
 def _summary(metrics: dict) -> dict:
+    vj = metrics["vjepa"]
     s: dict = {
-        "positions_R2": metrics["vjepa"]["positions"]["overall_r2"],
-        "velocities_R2": metrics["vjepa"]["velocities"]["overall_r2"],
-        "degradation_horizons": metrics["degradation"]["horizons"],
-        "degradation_vjepa": metrics["degradation"]["vjepa"],
+        # Per-frame, EMA target — back-compat with the V1 headline numbers.
+        "positions_R2_target_v1": vj["positions"]["overall_r2"],
+        "velocities_R2_target_v1": vj["velocities"]["overall_r2"],
+        # Per-frame, online encoder — apples-to-apples vs pixel baseline.
+        "positions_R2_online": vj.get("positions_online", {}).get("overall_r2"),
+        "velocities_R2_online": vj.get("velocities_online", {}).get("overall_r2"),
+        # 4-frame context window — the physically valid velocity probe.
+        "positions_R2_ctx_window": vj.get("positions_ctx_window", {}).get("overall_r2"),
+        "velocities_R2_ctx_window": vj.get("velocities_ctx_window", {}).get("overall_r2"),
+        # Rollout MAE (V-JEPA + probe), with reference baselines.
+        "rollout_horizons": metrics["rollout_mae"]["horizons"],
+        "rollout_vjepa_mae": metrics["rollout_mae"]["vjepa_mae"],
+        "rollout_copy_last_mae": metrics["rollout_mae"]["copy_last_mae"],
+        "rollout_identity_mae": metrics["rollout_mae"]["identity_mae"],
     }
     if "pixel" in metrics:
-        s["pixel_positions_R2"] = metrics["pixel"]["positions"]["overall_r2"]
-        s["pixel_velocities_R2"] = metrics["pixel"]["velocities"]["overall_r2"]
+        px = metrics["pixel"]
+        s["pixel_positions_R2"] = px["positions"]["overall_r2"]
+        s["pixel_velocities_R2"] = px["velocities"]["overall_r2"]
+        s["pixel_positions_R2_ctx_window"] = px.get("positions_ctx_window", {}).get("overall_r2")
+        s["pixel_velocities_R2_ctx_window"] = px.get("velocities_ctx_window", {}).get("overall_r2")
+    if "regime_held_out" in metrics:
+        ro = metrics["regime_held_out"]
+        s["regime_held_out_test_strategy"] = ro["held_out"]
+        s["regime_positions_R2_ctx_window"] = ro["ctx_window"]["positions"]["overall_r2"]
+        s["regime_velocities_R2_ctx_window"] = ro["ctx_window"]["velocities"]["overall_r2"]
     return s
 
 
