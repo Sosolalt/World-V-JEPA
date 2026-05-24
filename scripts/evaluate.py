@@ -148,17 +148,33 @@ def _encode_frames_with(
     frames_u8_flat: np.ndarray,
     device: torch.device,
     batch_size: int = ENCODE_BATCH,
-) -> torch.Tensor:
-    """Encode (M, 3, H, W) uint8 frames via encode_fn; return (M, n_tokens, D) cpu tensor."""
-    out: list[torch.Tensor] = []
+) -> np.ndarray:
+    """Encode (M, 3, H, W) uint8 frames via encode_fn; return (M, n_tokens, D) numpy.
+
+    Pre-allocates the output array and writes batches directly into it. The
+    previous "accumulate-in-list + torch.cat" pattern doubled peak memory
+    during the cat (e.g. the context-window cache went from 7.6 GB final to
+    15.6 GB transient at 2000 sequences) and was a contributor to the eval
+    spiking to ~25 GB despite the documented "12 GB" budget.
+    """
     n = frames_u8_flat.shape[0]
+    # Run one tiny pass to learn the encoder's output shape without
+    # hard-coding (n_tokens, d) — keeps this helper generic across the
+    # per-frame and pixel-baseline encoders.
+    with torch.no_grad():
+        sample = encode_fn(
+            torch.from_numpy(frames_u8_flat[:1]).to(device).float() / 255.0
+        )
+    n_tokens, d = sample.shape[1], sample.shape[2]
+    out = np.empty((n, n_tokens, d), dtype=np.float32)
+    del sample
     for start in range(0, n, batch_size):
         chunk = frames_u8_flat[start : start + batch_size]
         x = torch.from_numpy(chunk).to(device).float() / 255.0
         with torch.no_grad():
             z = encode_fn(x)
-        out.append(z.detach().to("cpu"))
-    return torch.cat(out, dim=0)
+        out[start : start + chunk.shape[0]] = z.detach().to("cpu").numpy()
+    return out
 
 
 def encode_all_frames_target(model: VJEPA, store: FrameStore, device: torch.device) -> np.ndarray:
@@ -167,7 +183,91 @@ def encode_all_frames_target(model: VJEPA, store: FrameStore, device: torch.devi
     flat = store.frames.reshape(n * t, *store.frames.shape[2:])
     z = _encode_frames_with(lambda x: model.target_encode(x), flat, device)
     n_tokens, d = z.shape[1], z.shape[2]
-    return z.numpy().reshape(n, t, n_tokens, d).astype(np.float32, copy=False)
+    return z.reshape(n, t, n_tokens, d)
+
+
+def encode_all_frames_online(model: VJEPA, store: FrameStore, device: torch.device) -> np.ndarray:
+    """V-JEPA online encoder (no EMA, no temporal pos); (N, T, n_tokens, D) float32.
+
+    The headline V1 probe used `target_encode` (EMA copy lagged by τ→1.0 cosine
+    over 150 epochs). The pixel baseline's probe uses its online encoder. This
+    helper lets us probe both encoders on equal footing and disentangle "is the
+    EMA stale?" from "is the representation worse?".
+    """
+    n, t = store.frames.shape[:2]
+    flat = store.frames.reshape(n * t, *store.frames.shape[2:])
+    z = _encode_frames_with(lambda x: model.encoder(x), flat, device)
+    n_tokens, d = z.shape[1], z.shape[2]
+    return z.reshape(n, t, n_tokens, d)
+
+
+def _encode_windows_with(
+    encode_fn,
+    store_frames: np.ndarray,
+    device: torch.device,
+    context_frames: int,
+    batch_size: int = ENCODE_BATCH,
+) -> np.ndarray:
+    """Encode 4-frame sliding windows into a pre-allocated array.
+
+    Shared between V-JEPA and pixel-baseline context-window encoders. Same
+    pre-allocation strategy as `_encode_frames_with` — never accumulates a
+    list of batch tensors (which the old `torch.cat`-based version did, at
+    a 2× peak-memory cost; that was the headline bug behind the eval
+    spiking to ~24 GB despite the budget claim of ~12 GB).
+    """
+    n, t = store_frames.shape[:2]
+    t_eff = t - context_frames + 1
+    if t_eff <= 0:
+        raise ValueError(f"sequence_length={t} too short for context_frames={context_frames}")
+    # Discover output shape from a single window.
+    sample_window = store_frames[:1, :context_frames]  # (1, ctx, 3, H, W)
+    with torch.no_grad():
+        sample = encode_fn(
+            torch.from_numpy(sample_window).to(device).float() / 255.0
+        )
+    n_ctx, d = sample.shape[1], sample.shape[2]
+    out = np.empty((n, t_eff, n_ctx, d), dtype=np.float32)
+    del sample
+
+    # Iterate batches of sequences; for each batch, encode all t_eff windows.
+    # `windows` is reused across iterations of the outer loop (max ~91 MB at
+    # batch=64, ctx=4, 64x64).
+    h, w = store_frames.shape[3], store_frames.shape[4]
+    windows = np.empty(
+        (batch_size, t_eff, context_frames, store_frames.shape[2], h, w),
+        dtype=np.uint8,
+    )
+    for start in range(0, n, batch_size):
+        chunk = store_frames[start : start + batch_size]
+        b = chunk.shape[0]
+        windows_view = windows[:b]
+        for w_idx in range(t_eff):
+            windows_view[:, w_idx] = chunk[:, w_idx : w_idx + context_frames]
+        flat = windows_view.reshape(b * t_eff, context_frames, store_frames.shape[2], h, w)
+        x = torch.from_numpy(flat).to(device).float() / 255.0
+        with torch.no_grad():
+            tokens = encode_fn(x)
+        out[start : start + b] = (
+            tokens.detach().to("cpu").numpy().reshape(b, t_eff, n_ctx, d)
+        )
+    return out
+
+
+def encode_all_context_windows(
+    model: VJEPA, store: FrameStore, device: torch.device, context_frames: int = 4
+) -> np.ndarray:
+    """V-JEPA's actual training representation: 4-frame context with temporal pos.
+
+    Returns (N, T_eff, n_context_tokens, D) where T_eff = T - context_frames + 1
+    and the t-th slot holds the representation for window [t, t+context_frames).
+    The last-frame ground truth at index `t + context_frames - 1` is the natural
+    probe target — that frame's velocity is decodable from the 4-frame window
+    even though it isn't from a single frame.
+    """
+    return _encode_windows_with(
+        lambda x: model.encode_context(x), store.frames, device, context_frames
+    )
 
 
 def encode_all_frames_pixel(pixel_model, store: FrameStore, device: torch.device) -> np.ndarray:
@@ -176,7 +276,21 @@ def encode_all_frames_pixel(pixel_model, store: FrameStore, device: torch.device
     flat = store.frames.reshape(n * t, *store.frames.shape[2:])
     z = _encode_frames_with(lambda x: pixel_model.encoder(x), flat, device)
     n_tokens, d = z.shape[1], z.shape[2]
-    return z.numpy().reshape(n, t, n_tokens, d).astype(np.float32, copy=False)
+    return z.reshape(n, t, n_tokens, d)
+
+
+def encode_all_context_windows_pixel(
+    pixel_model, store: FrameStore, device: torch.device, context_frames: int = 4
+) -> np.ndarray:
+    """Pixel baseline's online encoder applied window-by-window (same protocol).
+
+    PixelPredictor exposes `encode_context(frames_4)` with the same signature
+    as VJEPA.encode_context (verbatim reuse — see baselines/pixel_predictor.py).
+    Provides an apples-to-apples context-window probe against V-JEPA.
+    """
+    return _encode_windows_with(
+        lambda x: pixel_model.encode_context(x), store.frames, device, context_frames
+    )
 
 
 # ---------------------------------------------------------------------------
