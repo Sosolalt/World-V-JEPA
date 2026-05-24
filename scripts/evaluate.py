@@ -472,6 +472,7 @@ def degradation_curve(
     horizons: list[int],
     cfg: Mapping[str, Any],
     batch_size: int = 16,
+    t_start_stride: int = 4,
 ) -> dict:
     """For each horizon, average cosine sim of predicted vs target latent on test sequences.
 
@@ -479,6 +480,11 @@ def degradation_curve(
       - V-JEPA: model.predict(context_tokens, dt)
       - copy-last: encoded last context frame (target encoder), tiled
       - random: gaussian noise matching the target shape
+
+    V1 fixed `t_start = max_t_start // 2`; that hides the variance across the
+    sequence. We now average over every `t_start_stride`-th valid start and
+    also report the standard deviation across starts, giving the curve a real
+    error bar.
     """
     context_frames = int(cfg["model"]["context_frames"])
     seq_len = int(cfg["data"]["sequence_length"])
@@ -494,57 +500,190 @@ def degradation_curve(
     test_frames = store.frames[test_idx]  # (Nte, T, 3, H, W)
     n_te = test_frames.shape[0]
 
-    results = {"horizons": list(horizons), "vjepa": [], "copy_last": [], "random": []}
+    results = {
+        "horizons": list(horizons),
+        "vjepa": [], "copy_last": [], "random": [],
+        "vjepa_std": [], "copy_last_std": [],
+        "n_t_starts_per_horizon": [],
+    }
 
     rng = np.random.default_rng(SEED)
 
     for h in horizons:
         max_t_start = seq_len - context_frames - h
         if max_t_start < 0:
-            results["vjepa"].append(float("nan"))
-            results["copy_last"].append(float("nan"))
-            results["random"].append(float("nan"))
+            for k in ("vjepa", "copy_last", "random", "vjepa_std", "copy_last_std"):
+                results[k].append(float("nan"))
+            results["n_t_starts_per_horizon"].append(0)
             continue
 
-        vjepa_sims: list[float] = []
-        copy_sims: list[float] = []
-        rand_sims: list[float] = []
+        t_starts = list(range(0, max_t_start + 1, t_start_stride))
+        if not t_starts:
+            t_starts = [0]
 
-        for start in range(0, n_te, batch_size):
-            chunk = test_frames[start : start + batch_size]  # (b, T, 3, H, W)
-            b = chunk.shape[0]
-            x = torch.from_numpy(chunk).to(device).float() / 255.0
+        vjepa_per_start: list[float] = []
+        copy_per_start: list[float] = []
+        rand_per_start: list[float] = []
 
-            # Iterate possible t_starts but to keep cost low use one fixed t_start per horizon.
-            t_start = max_t_start // 2
-            context = x[:, t_start : t_start + context_frames].contiguous()
-            target_idx = t_start + context_frames - 1 + h
-            target_frame = x[:, target_idx].contiguous()
-            dt_tensor = torch.full((b,), h, device=device, dtype=torch.long)
+        for t_start in t_starts:
+            vjepa_sims: list[float] = []
+            copy_sims: list[float] = []
+            rand_sims: list[float] = []
 
-            with torch.no_grad():
-                ctx_tokens = model.encode_context(context)
-                predictor_input = model.apply_context_mask(ctx_tokens, mask_ratio)
-                z_pred = model.predict(predictor_input, dt_tensor)
-                z_target = model.target_encode(target_frame)
-                last_frame = x[:, t_start + context_frames - 1].contiguous()
-                z_copy = model.target_encode(last_frame)
+            for start in range(0, n_te, batch_size):
+                chunk = test_frames[start : start + batch_size]
+                b = chunk.shape[0]
+                x = torch.from_numpy(chunk).to(device).float() / 255.0
 
-            sim_vj = cosine_sim_batched(z_pred, z_target).item()
-            sim_cp = cosine_sim_batched(z_copy, z_target).item()
-            z_rand = torch.from_numpy(
-                rng.standard_normal((b, n_tokens, latent_dim)).astype(np.float32)
-            ).to(device)
-            sim_rd = cosine_sim_batched(z_rand, z_target).item()
+                context = x[:, t_start : t_start + context_frames].contiguous()
+                target_idx = t_start + context_frames - 1 + h
+                target_frame = x[:, target_idx].contiguous()
+                dt_tensor = torch.full((b,), h, device=device, dtype=torch.long)
 
-            vjepa_sims.append(sim_vj * b)
-            copy_sims.append(sim_cp * b)
-            rand_sims.append(sim_rd * b)
+                with torch.no_grad():
+                    ctx_tokens = model.encode_context(context)
+                    predictor_input = model.apply_context_mask(ctx_tokens, mask_ratio)
+                    z_pred = model.predict(predictor_input, dt_tensor)
+                    z_target = model.target_encode(target_frame)
+                    last_frame = x[:, t_start + context_frames - 1].contiguous()
+                    z_copy = model.target_encode(last_frame)
 
-        denom = float(n_te)
-        results["vjepa"].append(float(sum(vjepa_sims) / denom))
-        results["copy_last"].append(float(sum(copy_sims) / denom))
-        results["random"].append(float(sum(rand_sims) / denom))
+                vjepa_sims.append(cosine_sim_batched(z_pred, z_target).item() * b)
+                copy_sims.append(cosine_sim_batched(z_copy, z_target).item() * b)
+                z_rand = torch.from_numpy(
+                    rng.standard_normal((b, n_tokens, latent_dim)).astype(np.float32)
+                ).to(device)
+                rand_sims.append(cosine_sim_batched(z_rand, z_target).item() * b)
+
+            denom = float(n_te)
+            vjepa_per_start.append(sum(vjepa_sims) / denom)
+            copy_per_start.append(sum(copy_sims) / denom)
+            rand_per_start.append(sum(rand_sims) / denom)
+
+        results["vjepa"].append(float(np.mean(vjepa_per_start)))
+        results["copy_last"].append(float(np.mean(copy_per_start)))
+        results["random"].append(float(np.mean(rand_per_start)))
+        results["vjepa_std"].append(float(np.std(vjepa_per_start)))
+        results["copy_last_std"].append(float(np.std(copy_per_start)))
+        results["n_t_starts_per_horizon"].append(len(t_starts))
+
+    return results
+
+
+def rollout_position_error(
+    model: VJEPA,
+    store: FrameStore,
+    train_idx: np.ndarray,
+    test_idx: np.ndarray,
+    target_z: np.ndarray,
+    device: torch.device,
+    horizons: list[int],
+    cfg: Mapping[str, Any],
+    batch_size: int = 16,
+    t_start_stride: int = 4,
+) -> dict:
+    """Predict z_pred at horizon h, decode to ball positions via a frozen Ridge
+    probe trained on the EMA target encoder, and report per-horizon position MAE.
+
+    This replaces the cos-sim degradation curve as the headline rollout metric.
+    The V1 curve compared cos(z_pred, z_target) to cos(copy_last, z_target) and
+    reported 0.075 vs 0.95 — which mostly measures that with mask_ratio=0.75 the
+    predictor outputs the target centroid (high MSE-of-mean accuracy, near-zero
+    per-sample cosine sim). A probe-decoded MAE in *position space* is the
+    physically meaningful quantity: "if we trust the predictor, where would it
+    place the balls, and how far off would it be?".
+
+    Two reference baselines:
+      - copy-last-frame: encode the last context frame, decode to positions
+      - identity-positions: assume balls don't move (MAE of position(t) vs
+        position(t+context_frames-1+h)) — the *true* trivial-physics baseline
+    """
+    context_frames = int(cfg["model"]["context_frames"])
+    seq_len = int(cfg["data"]["sequence_length"])
+    mask_ratio = float(cfg.get("training", {}).get("mask_ratio", 0.0))
+
+    # Fit the decode-probe once on the train split using EMA-target latents at
+    # every frame the probe will be asked to decode. Use a fixed alpha to keep
+    # the multi-horizon cost bounded.
+    probe_train = linear_probe(target_z, store.positions, train_idx, test_idx, alpha=1.0)
+    # Refit on the full (capped) train set so we can call .predict directly.
+    max_train_sequences = 2000
+    if len(train_idx) > max_train_sequences:
+        stride = max(1, len(train_idx) // max_train_sequences)
+        train_idx_cap = train_idx[::stride][:max_train_sequences]
+    else:
+        train_idx_cap = train_idx
+    x_tr, y_tr = flatten_for_probe(target_z, store.positions, train_idx_cap)
+    decode = Ridge(alpha=probe_train["alpha"] if "alpha" in probe_train else 1.0)
+    decode.fit(x_tr, y_tr)
+    del x_tr, y_tr
+    import gc; gc.collect()
+
+    test_frames = store.frames[test_idx]
+    test_positions = store.positions[test_idx]
+    n_te = test_frames.shape[0]
+    n_balls = test_positions.shape[2]
+
+    results = {
+        "horizons": list(horizons),
+        "vjepa_mae": [], "copy_last_mae": [], "identity_mae": [],
+        "n_t_starts_per_horizon": [],
+        "probe_alpha": float(probe_train.get("alpha", 1.0)),
+        "probe_train_r2": float(probe_train["overall_r2"]),
+    }
+
+    for h in horizons:
+        max_t_start = seq_len - context_frames - h
+        if max_t_start < 0:
+            for k in ("vjepa_mae", "copy_last_mae", "identity_mae"):
+                results[k].append(float("nan"))
+            results["n_t_starts_per_horizon"].append(0)
+            continue
+
+        t_starts = list(range(0, max_t_start + 1, t_start_stride))
+        if not t_starts:
+            t_starts = [0]
+
+        vj_maes: list[float] = []
+        cp_maes: list[float] = []
+        id_maes: list[float] = []
+
+        for t_start in t_starts:
+            target_t = t_start + context_frames - 1 + h
+            last_ctx_t = t_start + context_frames - 1
+            true_pos = test_positions[:, target_t].reshape(n_te, n_balls * 2)
+            last_pos = test_positions[:, last_ctx_t].reshape(n_te, n_balls * 2)
+            id_maes.append(float(np.mean(np.abs(true_pos - last_pos))))
+
+            z_pred_all: list[np.ndarray] = []
+            z_copy_all: list[np.ndarray] = []
+            for start in range(0, n_te, batch_size):
+                chunk = test_frames[start : start + batch_size]
+                b = chunk.shape[0]
+                x = torch.from_numpy(chunk).to(device).float() / 255.0
+                context = x[:, t_start : t_start + context_frames].contiguous()
+                dt_tensor = torch.full((b,), h, device=device, dtype=torch.long)
+                with torch.no_grad():
+                    ctx_tokens = model.encode_context(context)
+                    pred_input = model.apply_context_mask(ctx_tokens, mask_ratio)
+                    z_pred = model.predict(pred_input, dt_tensor)
+                    last_frame = x[:, last_ctx_t].contiguous()
+                    z_copy = model.target_encode(last_frame)
+                z_pred_all.append(z_pred.detach().to("cpu").numpy())
+                z_copy_all.append(z_copy.detach().to("cpu").numpy())
+
+            z_pred_flat = np.concatenate(z_pred_all, axis=0).reshape(n_te, -1)
+            z_copy_flat = np.concatenate(z_copy_all, axis=0).reshape(n_te, -1)
+            pos_pred = decode.predict(z_pred_flat)
+            pos_copy = decode.predict(z_copy_flat)
+
+            vj_maes.append(float(np.mean(np.abs(true_pos - pos_pred))))
+            cp_maes.append(float(np.mean(np.abs(true_pos - pos_copy))))
+
+        results["vjepa_mae"].append(float(np.mean(vj_maes)))
+        results["copy_last_mae"].append(float(np.mean(cp_maes)))
+        results["identity_mae"].append(float(np.mean(id_maes)))
+        results["n_t_starts_per_horizon"].append(len(t_starts))
 
     return results
 
