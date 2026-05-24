@@ -36,6 +36,9 @@ class BilliardDataset(Dataset):
         self.frames = frames
         self.positions = positions.astype(np.float32, copy=False)
         self.velocities = velocities.astype(np.float32, copy=False)
+        # Per-sequence init strategy label (string), or None if absent (older NPZs).
+        # Used by the held-out regime probe in scripts/evaluate.py.
+        self.strategies = np.asarray(data["strategies"]) if "strategies" in data.files else None
         self.npz_path = npz_path
 
     def __len__(self) -> int:
