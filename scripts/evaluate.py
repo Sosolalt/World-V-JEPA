@@ -721,13 +721,98 @@ def plot_latent_pca_trajectory(
 def plot_degradation_curve(curve: dict, out_path: Path) -> None:
     fig, ax = plt.subplots(figsize=(7, 5))
     h = curve["horizons"]
-    ax.plot(h, curve["vjepa"], "o-", label="V-JEPA")
-    ax.plot(h, curve["copy_last"], "s--", label="copy-last-frame")
-    ax.plot(h, curve["random"], "x:", label="random")
+    vjepa_mean = np.array(curve["vjepa"], dtype=float)
+    copy_mean = np.array(curve["copy_last"], dtype=float)
+    rand_mean = np.array(curve["random"], dtype=float)
+    vjepa_std = np.array(curve.get("vjepa_std", [0.0] * len(h)), dtype=float)
+    copy_std = np.array(curve.get("copy_last_std", [0.0] * len(h)), dtype=float)
+    ax.errorbar(h, vjepa_mean, yerr=vjepa_std, fmt="o-", label="V-JEPA", capsize=3)
+    ax.errorbar(h, copy_mean, yerr=copy_std, fmt="s--", label="copy-last-frame", capsize=3)
+    ax.plot(h, rand_mean, "x:", label="random")
     ax.set_xlabel("prediction horizon Δt")
     ax.set_ylabel("cosine similarity (z_pred, z_target)")
-    ax.set_title("Latent prediction degradation vs horizon")
+    ax.set_title("Latent prediction degradation vs horizon\n(error bars: std across t_start)")
     ax.grid(True, alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=140)
+    plt.close(fig)
+
+
+def plot_rollout_mae(roll: dict, out_path: Path) -> None:
+    """Position-space rollout MAE; the physically meaningful counterpart to
+    the cos-sim degradation curve. Lower is better."""
+    fig, ax = plt.subplots(figsize=(7, 5))
+    h = roll["horizons"]
+    ax.plot(h, roll["vjepa_mae"], "o-", label="V-JEPA (predictor + probe)")
+    ax.plot(h, roll["copy_last_mae"], "s--", label="copy-last-frame + probe")
+    ax.plot(h, roll["identity_mae"], "^:", label="identity (assume no motion)")
+    ax.set_xlabel("prediction horizon Δt")
+    ax.set_ylabel("position MAE (normalized table coords)")
+    title = (
+        f"Rollout position error vs horizon\n"
+        f"probe α={roll.get('probe_alpha', 1.0):.2g}, "
+        f"probe train R²={roll.get('probe_train_r2', float('nan')):.3f}"
+    )
+    ax.set_title(title)
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=140)
+    plt.close(fig)
+
+
+def plot_probe_grid(metrics: dict, out_path: Path) -> None:
+    """Side-by-side bar chart of every probe variant we computed: per-frame
+    target/online, 4-frame context window, regime-held-out where available,
+    each for V-JEPA and pixel baseline. The headline 0.567-vs-0.616 number
+    is one of ~10 numbers here; the point of the figure is to surface the
+    full picture rather than pick a favorable one."""
+    labels: list[str] = []
+    vjepa_vals: list[float] = []
+    pixel_vals: list[float] = []
+
+    def add(label, vj, px):
+        labels.append(label)
+        vjepa_vals.append(float("nan") if vj is None else float(vj))
+        pixel_vals.append(float("nan") if px is None else float(px))
+
+    vj = metrics["vjepa"]
+    px = metrics.get("pixel", {})
+    add("pos / per-frame / target (V1)", vj["positions"]["overall_r2"],
+        px.get("positions", {}).get("overall_r2"))
+    add("pos / per-frame / online", vj.get("positions_online", {}).get("overall_r2"),
+        px.get("positions", {}).get("overall_r2"))
+    add("pos / 4-frame ctx-window", vj.get("positions_ctx_window", {}).get("overall_r2"),
+        px.get("positions_ctx_window", {}).get("overall_r2"))
+    add("vel / per-frame / target (V1)", vj["velocities"]["overall_r2"],
+        px.get("velocities", {}).get("overall_r2"))
+    add("vel / per-frame / online", vj.get("velocities_online", {}).get("overall_r2"),
+        px.get("velocities", {}).get("overall_r2"))
+    add("vel / 4-frame ctx-window", vj.get("velocities_ctx_window", {}).get("overall_r2"),
+        px.get("velocities_ctx_window", {}).get("overall_r2"))
+    if "regime_held_out" in metrics:
+        ro = metrics["regime_held_out"]
+        px_ro = px.get("regime_held_out", {})
+        add("pos / ctx-window / held-out",
+            ro["ctx_window"]["positions"]["overall_r2"],
+            px_ro.get("ctx_window", {}).get("positions", {}).get("overall_r2"))
+        add("vel / ctx-window / held-out",
+            ro["ctx_window"]["velocities"]["overall_r2"],
+            px_ro.get("ctx_window", {}).get("velocities", {}).get("overall_r2"))
+
+    fig, ax = plt.subplots(figsize=(11, 5))
+    x = np.arange(len(labels))
+    width = 0.4
+    ax.bar(x - width / 2, vjepa_vals, width, label="V-JEPA")
+    ax.bar(x + width / 2, pixel_vals, width, label="pixel baseline")
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=30, ha="right", fontsize=8)
+    ax.set_ylabel("R² (test split)")
+    ax.set_title("Probe-by-probe R² across every variant\n"
+                 "(higher = encoder linearly contains the target)")
+    ax.axhline(0, color="black", linewidth=0.6)
+    ax.grid(True, axis="y", alpha=0.3)
     ax.legend()
     fig.tight_layout()
     fig.savefig(out_path, dpi=140)
