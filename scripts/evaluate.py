@@ -62,7 +62,7 @@ import numpy as np  # noqa: E402
 import torch  # noqa: E402
 import yaml  # noqa: E402
 from sklearn.decomposition import PCA  # noqa: E402
-from sklearn.linear_model import Ridge  # noqa: E402
+from sklearn.linear_model import Ridge, RidgeCV  # noqa: E402
 from sklearn.manifold import TSNE  # noqa: E402
 from sklearn.metrics import r2_score  # noqa: E402
 
@@ -358,10 +358,14 @@ def flatten_for_probe(
 # ---------------------------------------------------------------------------
 
 
+RIDGE_CV_ALPHAS = np.logspace(-3, 3, 13)
+
+
 def linear_probe(
     z_seq: np.ndarray, targets: np.ndarray, train_idx: np.ndarray, test_idx: np.ndarray,
-    alpha: float = 1.0,
+    alpha: float | None = None,
     max_train_sequences: int = 2000,
+    solver: str = "auto",
 ) -> dict:
     """Fit Ridge from latents to targets; return overall + per-ball R^2 and MAE.
 
@@ -369,6 +373,10 @@ def linear_probe(
     ~8 GB per side; combined with target_z + pixel_z already in memory, this
     OOMs the 32GB-Mac eval. Cap train_idx at max_train_sequences so the probe
     runs in ~2 GB. Test set is always used in full (only ~2k sequences).
+
+    `alpha=None` (default) uses RidgeCV over `RIDGE_CV_ALPHAS`; pass an explicit
+    float to bypass CV (used by per-horizon rollout probes where re-fitting CV
+    for every horizon would be wasteful).
     """
     if len(train_idx) > max_train_sequences:
         # deterministic stride subsample preserves sequence diversity
@@ -376,8 +384,14 @@ def linear_probe(
         train_idx = train_idx[::stride][:max_train_sequences]
     x_tr, y_tr = flatten_for_probe(z_seq, targets, train_idx)
     x_te, y_te = flatten_for_probe(z_seq, targets, test_idx)
-    model = Ridge(alpha=alpha)
-    model.fit(x_tr, y_tr)
+    if alpha is None:
+        model = RidgeCV(alphas=RIDGE_CV_ALPHAS)
+        model.fit(x_tr, y_tr)
+        chosen_alpha = float(model.alpha_)
+    else:
+        model = Ridge(alpha=alpha, solver=solver)
+        model.fit(x_tr, y_tr)
+        chosen_alpha = float(alpha)
     y_pred = model.predict(x_te)
     # free big intermediates before next probe — sklearn can hold internal
     # copies of x_tr that take 8 GB on the default dataset.
@@ -396,7 +410,44 @@ def linear_probe(
         "per_ball_r2": per_ball_r2,
         "mean_per_ball_r2": float(np.mean(per_ball_r2)),
         "mae": mae,
+        "alpha": chosen_alpha,
+        "n_train_sequences": int(len(train_idx)),
+        "n_test_sequences": int(len(test_idx)),
     }
+
+
+def context_window_probe(
+    z_ctx: np.ndarray, targets: np.ndarray, train_idx: np.ndarray, test_idx: np.ndarray,
+    context_frames: int = 4,
+    max_train_sequences: int = 2000,
+) -> dict:
+    """Probe from 4-frame context latents to the target at the last context frame.
+
+    A single 64×64 frame contains positions but no velocity information; a per-
+    frame Ridge probe of velocities is therefore physically ill-posed (V1's
+    0.022 vs -0.042 result is noise on both sides). This probe gives the
+    regression access to 4 consecutive frames — the same temporal window
+    V-JEPA's encoder is trained on — which is the minimum needed for velocity
+    to be linearly decodable.
+
+    z_ctx: (N, T_eff, n_ctx_tokens, D) from `encode_all_context_windows`.
+    targets: (N, T, n_balls, 2). The window at slot t covers original frames
+    [t, t+context_frames); the natural ground-truth slot is t+context_frames-1.
+
+    Uses `alpha=1.0` with sklearn's iterative `lsqr` solver: the per-frame
+    probe has 64*128 = 8192 features and RidgeCV's SVD path is fine, but the
+    context-window probe has 4*64*128 = 32768 features and the SVD would
+    allocate ~7 GB (a 29000×29000 U matrix at our sample count). lsqr never
+    materializes the Gram matrix; the trade is no alpha tuning for that probe.
+    """
+    last_t_idx = context_frames - 1
+    t_eff = z_ctx.shape[1]
+    targets_aligned = targets[:, last_t_idx : last_t_idx + t_eff]
+    return linear_probe(
+        z_ctx, targets_aligned, train_idx, test_idx,
+        alpha=1.0, solver="lsqr",
+        max_train_sequences=max_train_sequences,
+    )
 
 
 # ---------------------------------------------------------------------------
