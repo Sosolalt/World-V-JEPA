@@ -20,12 +20,39 @@ import csv
 import json
 import math
 import os
+import resource
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
 os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+
+
+def cap_process_memory(gb: float | None) -> None:
+    """Hard-cap this process's virtual address space (macOS / Linux).
+
+    `resource.setrlimit(RLIMIT_AS, ...)` causes the next allocation past the
+    limit to raise MemoryError rather than letting the OS swap or kill the
+    whole machine. On macOS this honors the soft limit but PyTorch MPS uses
+    unified memory, so the cap covers both Python heap and MPS allocations.
+
+    Caveat: if your eval genuinely needs more than `gb`, you'll get a
+    MemoryError mid-run. Treat this as a defense-in-depth ceiling, not a
+    workaround for an actually-too-big workload — pair it with
+    `--max-eval-sequences` to shrink the working set first.
+    """
+    if gb is None or gb <= 0:
+        return
+    soft_bytes = int(gb * (1024 ** 3))
+    try:
+        cur_soft, cur_hard = resource.getrlimit(resource.RLIMIT_AS)
+        new_hard = cur_hard if cur_hard != resource.RLIM_INFINITY else soft_bytes
+        resource.setrlimit(resource.RLIMIT_AS, (soft_bytes, new_hard))
+        print(f"[eval] RAM cap (RLIMIT_AS) set to {gb:.1f} GB", flush=True)
+    except (ValueError, OSError) as exc:
+        print(f"[eval] WARNING: could not set RLIMIT_AS to {gb} GB: {exc}",
+              file=sys.stderr, flush=True)
 # Headless matplotlib (no display required).
 import matplotlib
 matplotlib.use("Agg")
