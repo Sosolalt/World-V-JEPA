@@ -304,6 +304,43 @@ def split_indices(n_sequences: int, train_frac: float = 0.8) -> tuple[np.ndarray
     return np.arange(n_train), np.arange(n_train, n_sequences)
 
 
+def shuffled_split_indices(
+    n_sequences: int, train_frac: float = 0.8, seed: int = SEED
+) -> tuple[np.ndarray, np.ndarray]:
+    """Sequence-level random split. V1 used an unshuffled `np.arange` split
+    that was de-facto non-iid across init strategies if the generator emitted
+    sequences strategy-by-strategy. Shuffling fixes the immediate bias; for
+    a real OOD test see `regime_split_indices`."""
+    rng = np.random.default_rng(seed)
+    perm = rng.permutation(n_sequences)
+    n_train = max(1, int(round(n_sequences * train_frac)))
+    n_train = min(n_train, n_sequences - 1) if n_sequences > 1 else n_sequences
+    return perm[:n_train], perm[n_train:]
+
+
+def regime_split_indices(
+    strategies: np.ndarray | None,
+    held_out: tuple[str, ...] = ("random_velocities",),
+) -> tuple[np.ndarray, np.ndarray] | None:
+    """Held-out-by-strategy split. Train on every strategy NOT in `held_out`;
+    test on those that are. Returns None if `strategies` is unavailable (older
+    NPZs) or if either side of the split would be empty.
+
+    The default holds out `random_velocities`, the strategy least visually
+    similar to the training-heavy `break` and `midgame_*` patterns. The
+    DESIGN.md "Evaluation honesty notes" item 1 explicitly flagged the missing
+    OOD probe as a known weakness.
+    """
+    if strategies is None:
+        return None
+    mask_test = np.isin(strategies, list(held_out))
+    test_idx = np.where(mask_test)[0]
+    train_idx = np.where(~mask_test)[0]
+    if len(train_idx) == 0 or len(test_idx) == 0:
+        return None
+    return train_idx, test_idx
+
+
 def flatten_for_probe(
     z_seq: np.ndarray, target_seq: np.ndarray, indices: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
