@@ -359,7 +359,7 @@ def flatten_for_probe(
 # ---------------------------------------------------------------------------
 
 
-RIDGE_CV_ALPHAS = np.logspace(-3, 3, 13)
+RIDGE_CV_ALPHAS = np.logspace(-3, 6, 19)
 
 
 def linear_probe(
@@ -1245,11 +1245,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--out", default="assets/results/", type=str, help="Output directory")
     p.add_argument("--pixel-ckpt", default=None, type=str,
                    help="Optional pixel-baseline checkpoint for side-by-side comparison")
-    p.add_argument("--max-eval-sequences", default=800, type=int,
+    p.add_argument("--max-eval-sequences", default=2000, type=int,
                    help="Stride-subsample the dataset to at most this many sequences "
-                        "before encoding. Bounds peak RAM (default 800 -> ~9 GB "
-                        "peak with the lsqr context-window solver). Pass a larger "
-                        "value to opt into more data and tighter R² estimates.")
+                        "before encoding. Bounds peak RAM (default 2000 -> ~12 GB "
+                        "peak with the lsqr context-window solver). Pass a smaller "
+                        "value if memory-constrained; a larger value to opt into "
+                        "more data and tighter R² estimates.")
     p.add_argument("--ram-limit-gb", default=None, type=float,
                    help="Hard-cap this process's virtual address space (RLIMIT_AS). "
                         "If exceeded the script raises MemoryError instead of "
