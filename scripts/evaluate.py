@@ -1174,18 +1174,33 @@ def run_evaluation(
 
         print("[eval] encoding frames with pixel baseline encoder...", flush=True)
         pixel_z = encode_all_frames_pixel(pixel_model, store, device)
+        print(f"[eval] pixel_z shape={pixel_z.shape}", flush=True)
         pix_pos = linear_probe(pixel_z, store.positions, train_idx, test_idx)
         pix_vel = linear_probe(pixel_z, store.velocities, train_idx, test_idx)
+        print(
+            f"[eval]   pixel/positions R²={pix_pos['overall_r2']:.4f} "
+            f"pixel/velocities R²={pix_vel['overall_r2']:.4f}",
+            flush=True,
+        )
 
         print("[eval] encoding 4-frame context windows (pixel baseline)...", flush=True)
         pixel_ctx_z = encode_all_context_windows_pixel(
             pixel_model, store, device, context_frames=context_frames
         )
+        print(f"[eval] pixel_ctx_z shape={pixel_ctx_z.shape}", flush=True)
+        print("[eval] fitting pixel ctx-window position probe...", flush=True)
         pix_pos_ctx = context_window_probe(
             pixel_ctx_z, store.positions, train_idx, test_idx, context_frames=context_frames
         )
+        print("[eval] fitting pixel ctx-window velocity probe...", flush=True)
         pix_vel_ctx = context_window_probe(
             pixel_ctx_z, store.velocities, train_idx, test_idx, context_frames=context_frames
+        )
+        print(
+            f"[eval]   pixel/ctx-window/positions R²={pix_pos_ctx['overall_r2']:.4f} "
+            f"pixel/ctx-window/velocities R²={pix_vel_ctx['overall_r2']:.4f} "
+            f"(α={pix_vel_ctx['alpha']:.2g})",
+            flush=True,
         )
 
         metrics["pixel"] = {
@@ -1197,6 +1212,11 @@ def run_evaluation(
         }
         if regime is not None:
             r_train, r_test = regime
+            print(
+                f"[eval] pixel held-out-regime probes "
+                f"(train={len(r_train)} test={len(r_test)})...",
+                flush=True,
+            )
             metrics["pixel"]["regime_held_out"] = {
                 "per_frame": {
                     "positions": linear_probe(pixel_z, store.positions, r_train, r_test),
@@ -1211,6 +1231,13 @@ def run_evaluation(
                     ),
                 },
             }
+            print(
+                f"[eval]   pixel/regime/per-frame/positions R²="
+                f"{metrics['pixel']['regime_held_out']['per_frame']['positions']['overall_r2']:.4f} "
+                f"pixel/regime/ctx-window/velocities R²="
+                f"{metrics['pixel']['regime_held_out']['ctx_window']['velocities']['overall_r2']:.4f}",
+                flush=True,
+            )
         # Free the bigger one immediately; we still need pixel_z for the
         # side-by-side PCA plot below.
         del pixel_ctx_z
@@ -1220,11 +1247,6 @@ def run_evaluation(
             "vjepa": {"positions": pos_probe_target, "velocities": vel_probe_target},
             "pixel": {"positions": pix_pos, "velocities": pix_vel},
         }
-        print(
-            f"[eval]   pixel/per-frame/positions R²={pix_pos['overall_r2']:.4f} "
-            f"pixel/ctx-window/velocities R²={pix_vel_ctx['overall_r2']:.4f}",
-            flush=True,
-        )
 
     print("[eval] writing visualizations...", flush=True)
     plot_latent_pca_trajectory(target_z, store, out / "latent_pca_trajectory.png")
