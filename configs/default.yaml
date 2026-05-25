@@ -39,7 +39,7 @@
 #   var_loss_weight (float)           VICReg variance term weight
 #   cov_loss_weight (float)           VICReg covariance term weight (decorrelates dims)
 #   reg_target (str)                  "z_pred" | "context" | "both"; where var/cov reg is applied
-#   loss_fn (str)                     "mse" | "smooth_l1"; prediction-vs-target loss
+#   loss_fn (str)                     "mse" | "smooth_l1" | "l1"; prediction-vs-target loss
 #   mask_ratio (float)                Fraction of context tokens replaced with the learned
 #                                     mask_token before the predictor (V-JEPA-style asymmetry)
 #   collapse_eff_rank_threshold       effective_rank below this counts as collapsed
