@@ -474,6 +474,7 @@ def degradation_curve(
     cfg: Mapping[str, Any],
     batch_size: int = 16,
     t_start_stride: int = 4,
+    eval_mask_ratio: float = 0.0,
 ) -> dict:
     """For each horizon, average cosine sim of predicted vs target latent on test sequences.
 
@@ -486,17 +487,18 @@ def degradation_curve(
     sequence. We now average over every `t_start_stride`-th valid start and
     also report the standard deviation across starts, giving the curve a real
     error bar.
+
+    `eval_mask_ratio` is the fraction of context tokens masked before the
+    predictor at inference. V1 silently inherited `cfg.training.mask_ratio`
+    (=0.75), measuring the predictor on its training-time-masked input
+    distribution — that is a leak: a real-world deployment never has access
+    to a 75%-masked oracle context. Default to 0.0 (no inference-time mask).
     """
     context_frames = int(cfg["model"]["context_frames"])
     seq_len = int(cfg["data"]["sequence_length"])
     n_tokens = int(cfg["model"]["spatial_tokens"])
     latent_dim = int(cfg["model"]["latent_dim"])
-    # Match training-time masking so the predictor sees the distribution it
-    # was trained on. Without this the degradation curve measures predictor
-    # output on an unseen unmasked-context distribution and reports ~0.07
-    # cosine similarity, which is a train/eval-mismatch artifact, not a
-    # real prediction failure.
-    mask_ratio = float(cfg.get("training", {}).get("mask_ratio", 0.0))
+    mask_ratio = float(eval_mask_ratio)
 
     test_frames = store.frames[test_idx]  # (Nte, T, 3, H, W)
     n_te = test_frames.shape[0]
@@ -582,6 +584,7 @@ def rollout_position_error(
     cfg: Mapping[str, Any],
     batch_size: int = 16,
     t_start_stride: int = 4,
+    eval_mask_ratio: float = 0.0,
 ) -> dict:
     """Predict z_pred at horizon h, decode to ball positions via a frozen Ridge
     probe trained on the EMA target encoder, and report per-horizon position MAE.
@@ -601,7 +604,8 @@ def rollout_position_error(
     """
     context_frames = int(cfg["model"]["context_frames"])
     seq_len = int(cfg["data"]["sequence_length"])
-    mask_ratio = float(cfg.get("training", {}).get("mask_ratio", 0.0))
+    # See degradation_curve for the mask-leak rationale; default unmasked.
+    mask_ratio = float(eval_mask_ratio)
 
     # Fit the decode-probe once on the train split using EMA-target latents at
     # every frame the probe will be asked to decode. Use a fixed alpha to keep
@@ -974,6 +978,7 @@ def run_evaluation(
     horizons: list[int] | None = None,
     max_eval_sequences: int = 2000,
     ram_limit_gb: float | None = None,
+    eval_mask_ratio: float = 0.0,
 ) -> dict:
     cap_process_memory(ram_limit_gb)
     set_seed(SEED)
@@ -1120,11 +1125,19 @@ def run_evaluation(
     _free_gpu()
 
     # --- Phase E: degradation + rollout — these use `model` directly ---
-    print("[eval] degradation curve (cos sim, multi-t_start averaged)...", flush=True)
-    deg = degradation_curve(model, store, test_idx, target_z, device, horizons, cfg)
+    print(
+        f"[eval] degradation curve (cos sim, multi-t_start averaged, "
+        f"eval_mask_ratio={eval_mask_ratio:.2f})...",
+        flush=True,
+    )
+    deg = degradation_curve(
+        model, store, test_idx, target_z, device, horizons, cfg,
+        eval_mask_ratio=eval_mask_ratio,
+    )
     print("[eval] rollout MAE (probe-decoded positions, multi-t_start)...", flush=True)
     roll = rollout_position_error(
-        model, store, train_idx, test_idx, target_z, device, horizons, cfg
+        model, store, train_idx, test_idx, target_z, device, horizons, cfg,
+        eval_mask_ratio=eval_mask_ratio,
     )
 
     metrics: dict = {
@@ -1135,6 +1148,7 @@ def run_evaluation(
         "n_sequences_dataset": int(n_seq_full),
         "n_sequences_evaluated": int(n_seq),
         "max_eval_sequences": int(max_eval_sequences),
+        "eval_mask_ratio": float(eval_mask_ratio),
         "n_train": int(len(train_idx)),
         "n_test": int(len(test_idx)),
         "vjepa": {
@@ -1256,6 +1270,14 @@ def parse_args() -> argparse.Namespace:
                         "If exceeded the script raises MemoryError instead of "
                         "exhausting system RAM. Defense-in-depth only — pair with "
                         "--max-eval-sequences if your workload genuinely needs less.")
+    p.add_argument("--eval-mask-ratio", default=0.0, type=float,
+                   help="Fraction of context tokens masked before the predictor "
+                        "at inference. Default 0.0 (no inference-time mask). "
+                        "V1 silently inherited the training-time 0.75 from the "
+                        "config — that was a leak; the predictor's apparent "
+                        "uselessness was partly that artifact. Set explicitly to "
+                        "0.75 only when reproducing V1 numbers or sweeping mask "
+                        "sensitivity.")
     return p.parse_args()
 
 
@@ -1269,6 +1291,7 @@ def main() -> int:
         pixel_ckpt_path=args.pixel_ckpt,
         max_eval_sequences=args.max_eval_sequences,
         ram_limit_gb=args.ram_limit_gb,
+        eval_mask_ratio=args.eval_mask_ratio,
     )
     print(json.dumps(_summary(metrics), indent=2), flush=True)
     return 0
