@@ -185,10 +185,41 @@ def _baseline_value(cfg: Mapping[str, Any], key: str, default):
     return cfg["training"].get(key, default)
 
 
-def train_pixel_baseline(cfg: Mapping[str, Any], data_path: str, epochs: int, repo_root: Path) -> int:
+def _load_vjepa_encoder_weights(model: PixelPredictor, ckpt_path: str, device: torch.device) -> None:
+    """Copy the `encoder.*` sub-state-dict from a V-JEPA checkpoint into the
+    pixel-baseline's encoder. The two encoders share `ContextEncoder` verbatim,
+    so the key prefixes line up. We do NOT copy `temporal_pos` or any predictor
+    weights — the pixel baseline trains its own predictor and temporal_pos on
+    the pixel-reconstruction objective."""
+    ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+    full_state = ckpt["model_state"]
+    enc_state = {
+        k[len("encoder."):]: v for k, v in full_state.items()
+        if k.startswith("encoder.")
+    }
+    missing, unexpected = model.encoder.load_state_dict(enc_state, strict=True)
+    if missing or unexpected:
+        raise RuntimeError(
+            f"V-JEPA encoder load mismatch: missing={missing} unexpected={unexpected}"
+        )
+
+
+def train_pixel_baseline(
+    cfg: Mapping[str, Any],
+    data_path: str,
+    epochs: int,
+    repo_root: Path,
+    init_from_vjepa: str | None = None,
+    freeze_encoder: bool = False,
+) -> int:
     _set_seed(int(cfg["training"]["seed"]))
     device = _select_device()
     print(f"[baseline-pixel] device={device}, data={data_path}, epochs={epochs}", flush=True)
+    if init_from_vjepa is not None:
+        print(f"[baseline-pixel] init encoder from V-JEPA ckpt: {init_from_vjepa}",
+              flush=True)
+    if freeze_encoder:
+        print("[baseline-pixel] encoder frozen (requires_grad=False)", flush=True)
 
     dataset = BilliardDataset(data_path)
     if len(dataset) == 0:
@@ -205,6 +236,11 @@ def train_pixel_baseline(cfg: Mapping[str, Any], data_path: str, epochs: int, re
     )
 
     model = PixelPredictor(cfg["model"]).to(device)
+    if init_from_vjepa is not None:
+        _load_vjepa_encoder_weights(model, init_from_vjepa, device)
+    if freeze_encoder:
+        for p in model.encoder.parameters():
+            p.requires_grad = False
     enc_params = _count(model.encoder)
     pred_params = _count(model.predictor) + model.temporal_pos.numel()
     dec_params = _count(model.decoder)
@@ -247,7 +283,10 @@ def train_pixel_baseline(cfg: Mapping[str, Any], data_path: str, epochs: int, re
         )
 
     timestamp = time.strftime("%Y%m%d_%H%M%S")
-    run_dir = repo_root / "runs" / "baseline_pixel" / timestamp
+    variant = "baseline_pixel"
+    if init_from_vjepa is not None:
+        variant = "baseline_pixel_frozenvjepa" if freeze_encoder else "baseline_pixel_initvjepa"
+    run_dir = repo_root / "runs" / variant / timestamp
     run_dir.mkdir(parents=True, exist_ok=True)
     metrics_path = run_dir / "metrics.csv"
     metrics_columns = ["epoch", "lr", "loss", "pixel_mse", "time_s"]

@@ -98,6 +98,22 @@ def parse_args() -> argparse.Namespace:
                    help="Run 2 epochs on data/sample/sample.npz regardless of config.")
     p.add_argument("--baseline", default=None, choices=["pixel"],
                    help="Train a baseline instead of V-JEPA (currently: 'pixel').")
+    p.add_argument("--init-from-vjepa", default=None, type=str,
+                   help="Path to a V-JEPA checkpoint. When set together with "
+                        "--baseline pixel, the pixel baseline's encoder is "
+                        "initialized from this V-JEPA encoder. Used to break "
+                        "the \"V-JEPA loses to its own architecture\" "
+                        "self-reference: V1's pixel baseline was a fresh "
+                        "ContextEncoder of identical capacity, not an "
+                        "independent baseline.")
+    p.add_argument("--freeze-encoder", action="store_true",
+                   help="Freeze the encoder during baseline training "
+                        "(requires_grad=False). Only meaningful with "
+                        "--baseline pixel --init-from-vjepa: trains only the "
+                        "pixel decoder + predictor on top of the frozen "
+                        "V-JEPA encoder, giving a genuinely independent "
+                        "\"can this representation be linearly decoded to "
+                        "pixels?\" diagnostic.")
     p.add_argument("--override", action="append", default=[],
                    metavar="key.path=value",
                    help="Override a nested config value. Repeatable. Value is "
@@ -158,7 +174,15 @@ def main() -> int:
 
     if args.baseline == "pixel":
         from baselines.pixel_predictor import train_pixel_baseline
-        return train_pixel_baseline(cfg, data_path, epochs, REPO_ROOT)
+        return train_pixel_baseline(
+            cfg, data_path, epochs, REPO_ROOT,
+            init_from_vjepa=args.init_from_vjepa,
+            freeze_encoder=args.freeze_encoder,
+        )
+    if args.init_from_vjepa is not None or args.freeze_encoder:
+        raise SystemExit(
+            "--init-from-vjepa / --freeze-encoder are only valid with --baseline pixel"
+        )
 
     set_seed(int(cfg["training"]["seed"]))
     device = select_device()
