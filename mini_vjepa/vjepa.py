@@ -7,6 +7,7 @@ from .encoder import ContextEncoder
 from .ema import EMAEncoder
 from .losses import (
     covariance_regularization,
+    l1_loss,
     mse_loss,
     smooth_l1_loss,
     variance_regularization,
@@ -103,7 +104,9 @@ class VJEPA(nn.Module):
         # falls back to CPU on MPS) and train.py recomputes them once per
         # epoch on the last batch's z_pred, not once per batch.
         z_target = z_target.detach()
-        if loss_fn == "smooth_l1":
+        if loss_fn == "l1":
+            sim = l1_loss(z_pred, z_target)
+        elif loss_fn == "smooth_l1":
             sim = smooth_l1_loss(z_pred, z_target)
         else:
             sim = mse_loss(z_pred, z_target)

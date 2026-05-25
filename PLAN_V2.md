@@ -267,3 +267,18 @@ No reviewer voted NO-GO at any iteration. All disagreements between A, B, C were
 - **Geometry of Projection Heads** ([arXiv 2605.17180](https://arxiv.org/html/2605.17180)) — 1×1 conv as mathematical rank ceiling
 - **keon/jepa** ([github](https://github.com/keon/jepa)) — toy V-JEPA on Moving MNIST: canonical masking + L1 + NO VICReg
 - **lucas-maes/le-wm** ([github](https://github.com/lucas-maes/le-wm)) — small-scale JEPA reference implementation
+
+---
+
+## 9. F7-F12 ownership audit
+
+This is the explicit phase pinning for the remaining failure modes in [docs/eval_failure_modes.md](docs/eval_failure_modes.md). F11 is the only orphan: it is acknowledged in the plan, but it is not assigned to a build phase because it is not actionable.
+
+| F# | Verbatim failure mode | Phase ownership | One-line ownership note |
+|---|---|---|---|
+| F7 | **`spatial_tokens=64` hardcode** | Phase 4 | Phase 4 owns this because the wider-trunk architecture review is where the `encoder.py` rank ceiling is already acknowledged, and that is the first place the 64-token bottleneck can be lifted or deferred cleanly. |
+| F8 | **`temporal_pos` ↔ mask token interaction** | Phase 2 | Phase 2 owns this because the masking redesign explicitly moves mask-token handling into the predictor and must define how `temporal_pos` combines with masked positions before the retrain can be trusted. |
+| F9 | **Concat-Ridge probe cannot decode velocity** | Phase 1-bis | Phase 1-bis owns this because the probe rebuild already replaces concat-Ridge with the finite-difference velocity probe, which is the direct fix for the methodology bug. |
+| F10 | **VICReg-on-encoder suppresses high-frequency dims** | Phase 4 | Phase 4 owns this because the architecture lift is the first planned place to move VICReg pressure off the encoder and onto the projector head without breaking single-knob discipline. |
+| F11 | **Held-out regime drop is partly covariate shift** | Orphan / plan note only | This is an orphan because the current plan records the covariate-shift caveat but does not assign a phase; keep it as a reporting caveat, not a build target, unless a later evaluation pass explicitly scopes regime normalization. |
+| F12 | **Predictor learns conditional mean at high mask ratio** | Phase 2 | Phase 2 owns this because the canonical masking + L1 retrain is the planned response to the high-mask conditional-mean collapse, and the per-mask-ratio monitor is part of that same training gate. |
