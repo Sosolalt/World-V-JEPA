@@ -10,6 +10,10 @@ def smooth_l1_loss(z_pred: torch.Tensor, z_target: torch.Tensor) -> torch.Tensor
     return F.smooth_l1_loss(z_pred, z_target)
 
 
+def l1_loss(z_pred: torch.Tensor, z_target: torch.Tensor) -> torch.Tensor:
+    return F.l1_loss(z_pred, z_target)
+
+
 def variance_regularization(z: torch.Tensor, eps: float = 1e-4) -> torch.Tensor:
     flat = z.reshape(-1, z.shape[-1])
     std = torch.sqrt(flat.var(dim=0, unbiased=False) + eps)
