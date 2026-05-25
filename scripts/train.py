@@ -265,11 +265,18 @@ def main() -> int:
         f"ema_tau_start={ema_tau_start}",
         flush=True,
     )
+    # Per-epoch monitor sampling: collect detached tensors from N evenly-spaced
+    # training batches and aggregate the heavy monitors (effective_rank, std,
+    # cosine_sim) as mean ± std over those batches. V1 used a single batch,
+    # so the rank=12 diagnosis driving all of V2's architecture work rested
+    # on what could have been ±5 of noise (F2 in eval_failure_modes).
+    monitor_n_batches = 10
     metrics_path = run_dir / "metrics.csv"
     metrics_columns = [
         "epoch", "lr", "tau", "loss", "mse", "var_reg", "cov_reg",
         "avg_std", "effective_rank", "avg_cosine_sim",
         "ctx_avg_std", "ctx_effective_rank", "ctx_avg_cosine_sim",
+        "effective_rank_std", "ctx_effective_rank_std", "n_monitor_batches",
         "time_s",
     ]
     with open(metrics_path, "w", newline="") as f:
@@ -296,8 +303,16 @@ def main() -> int:
         running_cov = 0.0
         n_batches = 0
 
-        last_z_pred_detached: torch.Tensor | None = None
-        last_ctx_detached: torch.Tensor | None = None
+        # Pick the batch indices we will sample for monitoring. Spread them
+        # evenly across the epoch so a non-stationary collapse mid-epoch is
+        # still caught. `steps_per_epoch` is the total batch count; if the
+        # epoch turns out shorter (last partial batch), we just sample fewer.
+        if steps_per_epoch >= monitor_n_batches:
+            stride = max(1, steps_per_epoch // monitor_n_batches)
+            monitor_steps = set(range(stride - 1, steps_per_epoch, stride))
+        else:
+            monitor_steps = set(range(steps_per_epoch))
+        monitor_samples: list[tuple[torch.Tensor, torch.Tensor]] = []
 
         for batch in loader:
             frames_u8 = batch["frames"].to(device, non_blocking=False)  # (B, T, 3, H, W)
@@ -353,43 +368,57 @@ def main() -> int:
             running_mse += float(out["mse"].item())
             running_var += float(out["var_reg"].item())
             running_cov += float(out["cov_reg"].item())
+            if n_batches in monitor_steps:
+                # Move to CPU immediately so MPS unified memory isn't pinned
+                # by ~10 detached batches per epoch.
+                monitor_samples.append(
+                    (z_pred.detach().to("cpu"), context_tokens.detach().to("cpu"))
+                )
             n_batches += 1
-            last_z_pred_detached = z_pred.detach()
-            last_ctx_detached = context_tokens.detach()
 
         avg_loss = running_loss / max(1, n_batches)
         avg_mse = running_mse / max(1, n_batches)
         avg_var = running_var / max(1, n_batches)
         avg_cov = running_cov / max(1, n_batches)
 
-        # Compute heavy monitors once per epoch on the last training batch's z_pred.
-        # effective_rank may fall back to CPU on MPS (PYTORCH_ENABLE_MPS_FALLBACK=1).
+        # Compute heavy monitors over the N sampled batches; report mean ± std
+        # so the eval probes can distinguish a real ctx_effective_rank trend
+        # from per-batch SVD noise (F2 — see eval_failure_modes).
         model.eval()
+        n_monitored = len(monitor_samples)
         with torch.no_grad():
-            if last_z_pred_detached is None:
-                avg_std_v = 0.0
-                eff_rank_v = 0.0
-                cos_sim_v = 0.0
-                ctx_std_v = 0.0
-                ctx_rank_v = 0.0
-                ctx_cos_v = 0.0
+            if n_monitored == 0:
+                avg_std_v = eff_rank_v = cos_sim_v = 0.0
+                ctx_std_v = ctx_rank_v = ctx_cos_v = 0.0
+                eff_rank_std = ctx_rank_std = 0.0
             else:
                 from mini_vjepa.losses import avg_std as _avg_std
                 from mini_vjepa.losses import avg_cosine_sim as _avg_cos
                 from mini_vjepa.losses import effective_rank as _eff_rank
-                avg_std_v = float(_avg_std(last_z_pred_detached).item())
-                eff_rank_v = float(_eff_rank(last_z_pred_detached).item())
-                cos_sim_v = float(_avg_cos(last_z_pred_detached).item())
-                # Encoder-level monitors: if the encoder is what collapses
-                # (as H2 predicts), these should drop before z_pred does.
-                if last_ctx_detached is not None:
-                    ctx_std_v = float(_avg_std(last_ctx_detached).item())
-                    ctx_rank_v = float(_eff_rank(last_ctx_detached).item())
-                    ctx_cos_v = float(_avg_cos(last_ctx_detached).item())
-                else:
-                    ctx_std_v = 0.0
-                    ctx_rank_v = 0.0
-                    ctx_cos_v = 0.0
+                z_std_l: list[float] = []
+                z_rank_l: list[float] = []
+                z_cos_l: list[float] = []
+                ctx_std_l: list[float] = []
+                ctx_rank_l: list[float] = []
+                ctx_cos_l: list[float] = []
+                for z_pred_cpu, ctx_cpu in monitor_samples:
+                    z_std_l.append(float(_avg_std(z_pred_cpu).item()))
+                    z_rank_l.append(float(_eff_rank(z_pred_cpu).item()))
+                    z_cos_l.append(float(_avg_cos(z_pred_cpu).item()))
+                    ctx_std_l.append(float(_avg_std(ctx_cpu).item()))
+                    ctx_rank_l.append(float(_eff_rank(ctx_cpu).item()))
+                    ctx_cos_l.append(float(_avg_cos(ctx_cpu).item()))
+                import statistics as _stats
+                avg_std_v = _stats.fmean(z_std_l)
+                eff_rank_v = _stats.fmean(z_rank_l)
+                cos_sim_v = _stats.fmean(z_cos_l)
+                ctx_std_v = _stats.fmean(ctx_std_l)
+                ctx_rank_v = _stats.fmean(ctx_rank_l)
+                ctx_cos_v = _stats.fmean(ctx_cos_l)
+                eff_rank_std = _stats.pstdev(z_rank_l) if len(z_rank_l) > 1 else 0.0
+                ctx_rank_std = _stats.pstdev(ctx_rank_l) if len(ctx_rank_l) > 1 else 0.0
+        # Free the CPU samples now that the monitors are scalars.
+        del monitor_samples
 
         if device.type == "mps":
             torch.mps.synchronize()
@@ -410,6 +439,9 @@ def main() -> int:
             "ctx_avg_std": ctx_std_v,
             "ctx_effective_rank": ctx_rank_v,
             "ctx_avg_cosine_sim": ctx_cos_v,
+            "effective_rank_std": eff_rank_std,
+            "ctx_effective_rank_std": ctx_rank_std,
+            "n_monitor_batches": n_monitored,
             "time_s": elapsed,
         }
         metrics_history.append(row)
@@ -417,8 +449,11 @@ def main() -> int:
             csv.writer(f).writerow([row[k] for k in metrics_columns])
         print(
             f"[epoch {epoch:03d}] loss={avg_loss:.4f} mse={avg_mse:.4f} var={avg_var:.4f} "
-            f"cov={avg_cov:.4f} avg_std={avg_std_v:.4f} eff_rank={eff_rank_v:.2f} "
-            f"cos_sim={cos_sim_v:.4f} ctx_eff_rank={ctx_rank_v:.2f} ctx_cos={ctx_cos_v:.4f} "
+            f"cov={avg_cov:.4f} avg_std={avg_std_v:.4f} "
+            f"eff_rank={eff_rank_v:.2f}±{eff_rank_std:.2f} "
+            f"cos_sim={cos_sim_v:.4f} "
+            f"ctx_eff_rank={ctx_rank_v:.2f}±{ctx_rank_std:.2f} ctx_cos={ctx_cos_v:.4f} "
+            f"(n_mon={n_monitored}) "
             f"lr={current_lr:.2e} tau={tau:.5f} t={elapsed:.1f}s",
             flush=True,
         )
