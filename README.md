@@ -6,22 +6,21 @@
 > by +13pp (positions), +20pp (corrected velocity), +19pp (OCP), and reaches 84%
 > pairwise accuracy on a Meta-style intuitive-physics counterfactual screen.
 
-![Architecture](assets/architecture_v2_a_wide.png)
+<br>
 
-Mini V-JEPA is a 0.92 M-parameter Joint Embedding Predictive Architecture
-trained on a single MacBook Pro M3 to predict the dynamics of nine balls on a 2D
-billiard table. The model never reconstructs a single pixel. It encodes four
-context frames into a latent representation and predicts the latent representation
-of a future frame, supervised against an EMA copy of its own encoder. Despite the
-small budget — three orders of magnitude below the original V-JEPA — the
-resulting encoder produces measurably better physical readouts than a
-parameter-matched pixel-prediction baseline on every downstream linear probe
-(positions, velocities, held-out initial-condition regime, object-contact
-prediction) and assigns visibly higher surprise to physics-violating sequences in
-a Meta-style Violation-of-Expectation (VoE) screen adapted from *Intuitive
-Physics Emerges from V-JEPA* ([arXiv 2502.11831](https://arxiv.org/abs/2502.11831)).
+<p align="center">
+  <img src="assets/simulation.gif" width="320" alt="9-ball billiard simulation" />
+</p>
+
+<br>
+
+![V2 architecture](assets/architecture.png)
+
+<br>
 
 ---
+
+<br>
 
 ## Key Results
 
@@ -32,6 +31,8 @@ V2 evaluation harness (online encoder, attentive probe, mean-pool + RidgeCV,
 velocity-via-difference, N=2000 sequence-level paired bootstrap with 1000
 resamples, eval mask ratio 0.0).
 
+<br>
+
 | Probe | V-JEPA V2 | Pixel (from-scratch) | Pixel (frozen V1 enc.) |
 |---|---|---|---|
 | Per-frame position R² | **0.74** [0.71, 0.77] ± 0.012 | 0.61 [0.58, 0.64] ± 0.014 | 0.59 [0.55, 0.63] ± 0.015 |
@@ -39,6 +40,8 @@ resamples, eval mask ratio 0.0).
 | OCP AUC (K=10) | **0.72** [0.69, 0.75] ± 0.013 | 0.53 [0.50, 0.56] ± 0.011 | 0.54 [0.51, 0.57] ± 0.012 |
 | Held-out-regime pos R² | **0.61** ± 0.016 | 0.48 ± 0.017 | 0.46 ± 0.018 |
 | VoE pairwise accuracy | **84%** [80, 87] | 56% [52, 60] | — |
+
+<br>
 
 CIs are 95% sequence-level paired bootstrap (1000 resamples, N=2000). The `± x`
 column is across-seed standard deviation of the probe (5 seeds, encoder fixed) —
@@ -59,7 +62,30 @@ The frozen-V1-encoder column is the readout diagnostic explained in
 [Baseline framing](#baseline-framing--why-two-pixel-predictors). Limitations are
 listed in [What we do NOT demonstrate](#what-we-do-not-demonstrate).
 
+<br>
+
 ---
+
+<br>
+
+Mini V-JEPA is a 0.92 M-parameter Joint Embedding Predictive Architecture
+trained on a single MacBook Pro M3 to predict the dynamics of nine balls on a 2D
+billiard table. The model never reconstructs a single pixel. It encodes four
+context frames into a latent representation and predicts the latent representation
+of a future frame, supervised against an EMA copy of its own encoder. Despite the
+small budget — three orders of magnitude below the original V-JEPA — the
+resulting encoder produces measurably better physical readouts than a
+parameter-matched pixel-prediction baseline on every downstream linear probe
+(positions, velocities, held-out initial-condition regime, object-contact
+prediction) and assigns visibly higher surprise to physics-violating sequences in
+a Meta-style Violation-of-Expectation (VoE) screen adapted from *Intuitive
+Physics Emerges from V-JEPA* ([arXiv 2502.11831](https://arxiv.org/abs/2502.11831)).
+
+<br>
+
+---
+
+<br>
 
 ## Why JEPA, Not Generative?
 
@@ -107,11 +133,17 @@ physical reasoning that pixel decoders cannot fake — is the entire content of
 this project. The result holds empirically on every probe except one
 horizon-1 rollout edge case explained in [Results](#predictor-and-autoregressive-rollout).
 
+<br>
+
 ---
+
+<br>
 
 ## Architecture
 
-![V2 architecture](assets/architecture_v2_a_wide.png)
+![V2 architecture](assets/architecture.png)
+
+<br>
 
 Mini V-JEPA V2 follows the canonical V-JEPA recipe end-to-end: mask the input in
 pixel space, encode the unmasked context, ask a small predictor to fill in the
@@ -186,6 +218,8 @@ Parameter count is **0.92 M trainable** (1.39 M including the EMA target). The
 Phase-4 wider-trunk + projector lift was not taken — Phase-3 cleared every gate
 without it.
 
+<br>
+
 ### Why these specific changes
 
 **Pixel-patch tubelet masking *before* the encoder.** V1 masked at the
@@ -214,6 +248,8 @@ the diversity regularizer internally — the iter-3 E4 failure mode the V1
 design places the mask token strictly at the predictor's input alongside the
 position embedding for the masked location.
 
+<br>
+
 ### What was preserved from V1
 
 The full iter-3 anti-collapse machinery is intact, **except** for the
@@ -233,7 +269,11 @@ tubelet masking):
 - Rank-based checkpoint selection (not loss).
 - `lr_peak=5e-5`, `grad_value_clip=0.5`, AdamW with cosine LR schedule.
 
+<br>
+
 ---
+
+<br>
 
 ## Training & Anti-Collapse Monitoring
 
@@ -295,9 +335,13 @@ on the first attempt: `ctx_effective_rank ≥ 8` sustained ep10-29 (mean over 10
 batches), `z_pred eff_rank ≥ 30` by ep20, predictor cos-sim at `mask_ratio=0.0`
 of 0.31 by ep29.
 
+<br>
+
 ### Training curves
 
 ![Training curves](assets/results/v2/training_curves.png)
+
+<br>
 
 Per-epoch `effective_rank`, `ctx_effective_rank`, `avg_std`, `avg_cosine_sim`,
 and the L1 loss for the full 150-epoch Phase 3 run. The `ctx_*` curves
@@ -315,7 +359,11 @@ multi-step rollout objective is visible as the step in the loss curve at ep0 of
 the second retrain; rollout MAE at horizons h=2-10 improves by ~3× over the
 Phase-2-only checkpoint.
 
+<br>
+
 ---
+
+<br>
 
 ## Dataset & Physics
 
@@ -335,6 +383,8 @@ Initial conditions are drawn from a five-strategy mix
 ([configs/default.yaml](configs/default.yaml),
 [simulation/generator.py](simulation/generator.py)):
 
+<br>
+
 | Strategy | Train weight | Geometry |
 |---|---|---|
 | `break` | 0.30 | Triangular rack at apex (0.7 w, 0.5 h) struck by a cue ball at 3–6 m/s |
@@ -343,13 +393,13 @@ Initial conditions are drawn from a five-strategy mix
 | `two_ball` | 0.15 | Isolated two-ball collision pattern |
 | `random_velocities` | **0 (held-out)** | Random positions, 40% of balls moving at 0.8–3.0 m/s |
 
+<br>
+
 The default training set (`data/default.npz`) is 10 000 sequences of 32 frames at
 64×64 RGB, sampled every `FRAME_STRIDE=4` physics ticks, giving 30 effective
 FPS. Frames are stored as `uint8` to keep the dataset under 2.5 GB in RAM;
 positions and velocities are kept as paired `float32` ground truth for probing.
 Per-sequence init-strategy labels are saved alongside the frames.
-
-![Billiard simulation](assets/simulation.gif)
 
 **Held-out-regime test split (V2).** The probe suite treats `random_velocities`
 as a **test-only** distribution. V2 generates a training dataset with this
@@ -371,7 +421,11 @@ mirrors *Intuitive Physics Emerges from V-JEPA*
 billiards. The stress dataset (15 balls, `configs/stress.yaml`) is generated
 but not yet trained on.
 
+<br>
+
 ---
+
+<br>
 
 ## Results
 
@@ -384,9 +438,13 @@ only what the probe is evaluated on). The headline encoder is the **online**
 context encoder per the V-JEPA / I-JEPA / DINOv2 / BYOL / MoCo convention; the
 EMA target is reported only as an ablation.
 
+<br>
+
 ### Linear probing
 
 ![Probe grid](assets/results/v2/probe_grid.png)
+
+<br>
 
 | Probe | V-JEPA V2 (online + attentive) | Pixel (from-scratch) | Pixel (frozen V1 enc.) |
 |---|---|---|---|
@@ -394,6 +452,8 @@ EMA target is reported only as an ablation.
 | Velocity-difference R² | **0.36** [0.32, 0.40] | 0.04 [0.01, 0.07] | 0.03 [0.00, 0.06] |
 | OCP AUC (K=10) | **0.72** [0.69, 0.75] | 0.53 [0.50, 0.56] | 0.54 [0.51, 0.57] |
 | Held-out regime (`random_velocities`) pos R² | **0.61** | 0.48 | 0.46 |
+
+<br>
 
 **Position probe.** Attentive probe — 1 cross-attention head with 8 learned
 query tokens, followed by a linear head — trained with AdamW (lr=1e-3, wd=0.01)
@@ -421,6 +481,8 @@ the imbalance, with PR-AUC = 0.59 alongside. Pixel baselines at 0.53–0.54 sit
 barely above the class prior — consistent with the hypothesis that next-frame
 reconstruction does not require modeling collision geometry.
 
+<br>
+
 ### Baseline framing — why two pixel predictors
 
 We report two pixel baselines, both sharing V-JEPA's parameter budget and
@@ -442,10 +504,15 @@ We report two pixel baselines, both sharing V-JEPA's parameter budget and
    pixel encoder cannot find this positional structure from its own training
    signal alone.
 
+<br>
+
 ### Predictor and autoregressive rollout
 
 ![Per-mask sweep](assets/results/v2/per_mask_sweep.png)
+
 ![Rollout MAE](assets/results/v2/rollout_mae.png)
+
+<br>
 
 With the inference-time mask leak patched (`--eval-mask-ratio 0.0` default), the
 V2 predictor cosine similarity at h=1 is **0.58**, versus V1's reported 0.075
@@ -462,12 +529,16 @@ per-model RidgeCV position probe (trained on each model's *own* latents on the
 against ground-truth pymunk positions at horizon h. Each model is decoded by
 its own probe — the rollout table compares apples to apples.
 
+<br>
+
 | Horizon | V-JEPA V2 | Pixel from-scratch | Copy-last-position |
 |---|---|---|---|
 | h=1 | 0.024 [0.022, 0.026] | 0.035 [0.032, 0.038] | 0.022 [0.020, 0.024] |
 | h=2 | 0.034 [0.031, 0.037] | 0.058 [0.054, 0.062] | 0.041 [0.038, 0.044] |
 | h=5 | 0.058 [0.054, 0.062] | 0.082 [0.077, 0.087] | 0.078 [0.073, 0.083] |
 | h=10 | 0.068 [0.063, 0.073] | 0.102 [0.096, 0.108] | 0.103 [0.097, 0.109] |
+
+<br>
 
 MAE is in normalized table-units (1.0 × 0.5 table). 95% sequence-bootstrap CIs
 in brackets. Copy-last-position (assume balls remain stationary at the last
@@ -482,10 +553,15 @@ sensitivity check**: applying V-JEPA's position probe to pixel-baseline latents
 pixel-baseline still loses at all horizons, so the per-model-probe choice in
 the main table is not what drives the result.
 
+<br>
+
 ### OCP — what probes can't fake
 
 ![Latent PCA trajectory](assets/results/v2/latent_pca_trajectory.png)
+
 ![t-SNE colored by speed](assets/results/v2/tsne_by_speed.png)
+
+<br>
 
 OCP (Object Contact Prediction, Physion-family) asks a logistic regression on
 frozen encoder features: *"will balls i and j come within 2·radius + ε of each
@@ -497,6 +573,8 @@ the class prior. The PCA trajectory plot shows V-JEPA latents traversing
 structured manifolds in the leading principal subspace; t-SNE colored by mean
 ball speed shows a clean speed gradient that V1 lacked.
 
+<br>
+
 ### Encoder geometry
 
 `ctx_effective_rank` over 10 batches/epoch (Phase 0 fix to F2): **19 / 64**
@@ -505,7 +583,11 @@ re-measured over 10 batches on the same checkpoint: 14 ± 3). `z_pred` effective
 rank: **82 / 128** (V1: 67). Trainable parameters: 0.92 M (1.39 M total
 including EMA target).
 
+<br>
+
 ---
+
+<br>
 
 ## VoE Counterfactual Screen
 
@@ -536,10 +618,14 @@ distinguish the pair until they overlap and is near chance. Each model is
 scored on its own predictor/target — no cross-model ground truth is used —
 so the comparison is symmetric.
 
+<br>
+
 | Model | Pairwise accuracy | Mean Δ surprise (CF − physical) |
 |---|---|---|
 | **V-JEPA V2 (ours)** | **84%** [80, 87] | +0.31 [+0.27, +0.34] |
 | Pixel baseline (from-scratch) | 56% [52, 60] | +0.04 [+0.01, +0.07] |
+
+<br>
 
 V-JEPA's 84% is in the 66-86% band Meta reports on the original real-video
 benchmark across context types. The pixel baseline at 56% is barely above
@@ -550,7 +636,11 @@ rendering.
 
 ![VoE rank distribution](assets/results/v2/voe_distribution.png)
 
+<br>
+
 ---
+
+<br>
 
 ## What this proves vs V1
 
@@ -602,7 +692,11 @@ pixel-encoder smoothness bias noted under [Velocity probe](#linear-probing).)
 V-JEPA / I-JEPA / DINOv2 / BYOL / MoCo all probe the **online** encoder. V2
 reports online as headline, EMA as ablation row.
 
+<br>
+
 ---
+
+<br>
 
 ## What we do NOT demonstrate
 
@@ -644,7 +738,11 @@ We mirror V1's honesty section because the same standard applies.
 - **Compute budget on a single M3 caps generalization claims.** All results are
   on 10K sequences, 150 epochs, float32 only.
 
+<br>
+
 ---
+
+<br>
 
 ## Reproducibility & Compute
 
@@ -666,7 +764,11 @@ We mirror V1's honesty section because the same standard applies.
   --data data/default.npz --tag v2_phase3 --rollout-steps 3` deterministically
   reproduces the Phase 3 checkpoint at seed 42.
 
+<br>
+
 ---
+
+<br>
 
 ## Quick Start
 
@@ -732,9 +834,13 @@ python scripts/voe_eval.py \
 
 For a fast smoke check, replace step 3 with `--debug` (2 epochs on
 `data/sample/sample.npz`). The architecture diagram is at
-`assets/architecture_v2_a_wide.png`.
+`assets/architecture.png`.
+
+<br>
 
 ---
+
+<br>
 
 ## References
 
@@ -752,7 +858,11 @@ For a fast smoke check, replace step 3 with `--debug` (2 epochs on
 | [Physion (Bear et al., 2021)](https://arxiv.org/abs/2106.08261) | OCP benchmark family |
 | [keon/jepa](https://github.com/keon/jepa) | Toy V-JEPA on Moving MNIST — canonical masking reference |
 
+<br>
+
 ---
+
+<br>
 
 ## License
 
