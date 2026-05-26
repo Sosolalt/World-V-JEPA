@@ -544,9 +544,23 @@ def degradation_curve(
                 dt_tensor = torch.full((b,), h, device=device, dtype=torch.long)
 
                 with torch.no_grad():
-                    ctx_tokens = model.encode_context(context)
-                    predictor_input = model.apply_context_mask(ctx_tokens, mask_ratio)
-                    z_pred = model.predict(predictor_input, dt_tensor)
+                    # Phase 2: eval-time mask is over pixel-patch tubelets,
+                    # not post-encoder tokens. mask_ratio=0.0 → no mask path
+                    # taken at all (encoder sees full input).
+                    if mask_ratio > 0.0:
+                        from mini_vjepa.masking import sample_pixel_mask
+                        pmask = sample_pixel_mask(
+                            b, context_frames, context.shape[-2], context.shape[-1],
+                            n_short_blocks=4,
+                            short_coverage=float(mask_ratio) * 0.15 / 0.75,
+                            n_long_blocks=1,
+                            long_coverage=float(mask_ratio) * 0.50 / 0.75,
+                            tubelet_t=2, device=device,
+                        )
+                    else:
+                        pmask = None
+                    ctx_tokens = model.encode_context(context, pixel_mask=pmask)
+                    z_pred = model.predict(ctx_tokens, dt_tensor)
                     z_target = model.target_encode(target_frame)
                     last_frame = x[:, t_start + context_frames - 1].contiguous()
                     z_copy = model.target_encode(last_frame)
@@ -669,9 +683,20 @@ def rollout_position_error(
                 context = x[:, t_start : t_start + context_frames].contiguous()
                 dt_tensor = torch.full((b,), h, device=device, dtype=torch.long)
                 with torch.no_grad():
-                    ctx_tokens = model.encode_context(context)
-                    pred_input = model.apply_context_mask(ctx_tokens, mask_ratio)
-                    z_pred = model.predict(pred_input, dt_tensor)
+                    if mask_ratio > 0.0:
+                        from mini_vjepa.masking import sample_pixel_mask
+                        pmask = sample_pixel_mask(
+                            b, context_frames, context.shape[-2], context.shape[-1],
+                            n_short_blocks=4,
+                            short_coverage=float(mask_ratio) * 0.15 / 0.75,
+                            n_long_blocks=1,
+                            long_coverage=float(mask_ratio) * 0.50 / 0.75,
+                            tubelet_t=2, device=device,
+                        )
+                    else:
+                        pmask = None
+                    ctx_tokens = model.encode_context(context, pixel_mask=pmask)
+                    z_pred = model.predict(ctx_tokens, dt_tensor)
                     last_frame = x[:, last_ctx_t].contiguous()
                     z_copy = model.target_encode(last_frame)
                 z_pred_all.append(z_pred.detach().to("cpu").numpy())

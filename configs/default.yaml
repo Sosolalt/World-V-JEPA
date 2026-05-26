@@ -111,11 +111,19 @@ training:
   # constraint via its own pos_embed + query_tokens + mask_token while the
   # encoder collapses silently (see strategies_log.md E4 case study).
   reg_target: both
-  # iter-3: mask 75% of context tokens before the predictor sees them. This
-  # is V-JEPA's canonical anti-collapse asymmetry, adapted to our token-level
-  # context. Disabling all four iter-3 changes reverts to iter-2 behavior.
-  mask_ratio: 0.75
-  loss_fn: mse
+  # Phase 2 (canonical V-JEPA): pixel-patch tubelet masking BEFORE encoder
+  # replaces the iter-3 post-encoder token replacement. Multi-block protocol
+  # per V-JEPA paper: 4 short blocks at 15% spatial coverage + 1 long block
+  # at 50% coverage; 2-frame tubelets; 8-pixel-grid-aligned blocks.
+  # Legacy `mask_ratio` is rejected (fail-loud at train.py startup) when it
+  # appears without `mask_strategy` to prevent silent fallback.
+  mask_strategy: tubelet
+  n_short_blocks: 4
+  short_coverage: 0.15
+  n_long_blocks: 1
+  long_coverage: 0.50
+  tubelet_t: 2
+  loss_fn: l1
   collapse_eff_rank_threshold: 5.0
   collapse_patience_epochs: 8
   checkpoint_every: 25

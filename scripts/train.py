@@ -233,7 +233,22 @@ def main() -> int:
     cov_weight = float(cfg["training"].get("cov_loss_weight", 1.0))
     reg_target = str(cfg["training"].get("reg_target", "z_pred"))
     loss_fn_name = str(cfg["training"].get("loss_fn", "mse"))
-    mask_ratio = float(cfg["training"].get("mask_ratio", 0.0))
+    # Phase 2: pixel-patch tubelet masking replaces the post-encoder token
+    # replacement. Legacy `mask_ratio` is rejected (fail-loud) to prevent a
+    # silent fallback to the deleted post-encoder mask path.
+    if "mask_ratio" in cfg["training"] and "mask_strategy" not in cfg["training"]:
+        raise ValueError(
+            "configs/default.yaml has legacy `training.mask_ratio` without "
+            "an accompanying `training.mask_strategy` key. Phase 2 removed "
+            "post-encoder token-replacement masking; set "
+            "`training.mask_strategy: tubelet` and the tubelet_* keys."
+        )
+    mask_strategy = str(cfg["training"].get("mask_strategy", "none"))
+    n_short_blocks = int(cfg["training"].get("n_short_blocks", 4))
+    short_coverage = float(cfg["training"].get("short_coverage", 0.15))
+    n_long_blocks = int(cfg["training"].get("n_long_blocks", 1))
+    long_coverage = float(cfg["training"].get("long_coverage", 0.50))
+    tubelet_t = int(cfg["training"].get("tubelet_t", 2))
     grad_clip = float(cfg["training"]["grad_clip"])
     grad_value_clip = float(cfg["training"].get("grad_value_clip", 0.0))
     checkpoint_every = int(cfg["training"]["checkpoint_every"])
@@ -261,8 +276,9 @@ def main() -> int:
         yaml.safe_dump(cfg, f, sort_keys=False)
     print(
         f"[train] reg_target={reg_target} loss_fn={loss_fn_name} "
-        f"mask_ratio={mask_ratio} cov_w={cov_weight} var_w={var_weight} "
-        f"ema_tau_start={ema_tau_start}",
+        f"mask_strategy={mask_strategy} short={n_short_blocks}@{short_coverage} "
+        f"long={n_long_blocks}@{long_coverage} tubelet_t={tubelet_t} "
+        f"cov_w={cov_weight} var_w={var_weight} ema_tau_start={ema_tau_start}",
         flush=True,
     )
     # Per-epoch monitor sampling: collect detached tensors from N evenly-spaced
@@ -312,7 +328,7 @@ def main() -> int:
             monitor_steps = set(range(stride - 1, steps_per_epoch, stride))
         else:
             monitor_steps = set(range(steps_per_epoch))
-        monitor_samples: list[tuple[torch.Tensor, torch.Tensor]] = []
+        monitor_samples: list[tuple[torch.Tensor, torch.Tensor, torch.Tensor | None]] = []
 
         for batch in loader:
             frames_u8 = batch["frames"].to(device, non_blocking=False)  # (B, T, 3, H, W)
@@ -326,11 +342,20 @@ def main() -> int:
             target_frame = frames[:, t_start + context_frames - 1 + delta_t].contiguous()
             dt_tensor = torch.full((b,), delta_t, device=device, dtype=torch.long)
 
-            context_tokens = model.encode_context(context)
-            # Apply mask token replacement to a fraction of context positions
-            # before the predictor (mask_ratio=0.0 returns context unchanged).
-            predictor_input = model.apply_context_mask(context_tokens, mask_ratio)
-            z_pred = model.predict(predictor_input, dt_tensor)
+            if mask_strategy == "tubelet":
+                from mini_vjepa.masking import sample_pixel_mask, pixel_mask_to_token_mask
+                pixel_mask = sample_pixel_mask(
+                    b, context_frames, frames.shape[-2], frames.shape[-1],
+                    n_short_blocks=n_short_blocks, short_coverage=short_coverage,
+                    n_long_blocks=n_long_blocks, long_coverage=long_coverage,
+                    tubelet_t=tubelet_t, device=device,
+                )
+                token_mask = pixel_mask_to_token_mask(pixel_mask, model.spatial_tokens)
+            else:
+                pixel_mask = None
+                token_mask = None
+            context_tokens = model.encode_context(context, pixel_mask=pixel_mask)
+            z_pred = model.predict(context_tokens, dt_tensor)
             z_target = model.target_encode(target_frame)
 
             out = model.compute_loss(
@@ -341,6 +366,7 @@ def main() -> int:
                 cov_weight=cov_weight,
                 reg_target=reg_target,
                 loss_fn=loss_fn_name,
+                context_token_mask=token_mask,
             )
             loss = out["loss"]
 
@@ -370,9 +396,13 @@ def main() -> int:
             running_cov += float(out["cov_reg"].item())
             if n_batches in monitor_steps:
                 # Move to CPU immediately so MPS unified memory isn't pinned
-                # by ~10 detached batches per epoch.
+                # by ~10 detached batches per epoch. Also stash the token mask
+                # so monitor recomputation can filter out masked positions
+                # (which are near-constant by construction post-substitution
+                # and would deflate var/eff_rank without filtering).
+                tm_cpu = token_mask.detach().to("cpu") if token_mask is not None else None
                 monitor_samples.append(
-                    (z_pred.detach().to("cpu"), context_tokens.detach().to("cpu"))
+                    (z_pred.detach().to("cpu"), context_tokens.detach().to("cpu"), tm_cpu)
                 )
             n_batches += 1
 
@@ -401,13 +431,21 @@ def main() -> int:
                 ctx_std_l: list[float] = []
                 ctx_rank_l: list[float] = []
                 ctx_cos_l: list[float] = []
-                for z_pred_cpu, ctx_cpu in monitor_samples:
+                for z_pred_cpu, ctx_cpu, tm_cpu in monitor_samples:
                     z_std_l.append(float(_avg_std(z_pred_cpu).item()))
                     z_rank_l.append(float(_eff_rank(z_pred_cpu).item()))
                     z_cos_l.append(float(_avg_cos(z_pred_cpu).item()))
-                    ctx_std_l.append(float(_avg_std(ctx_cpu).item()))
-                    ctx_rank_l.append(float(_eff_rank(ctx_cpu).item()))
-                    ctx_cos_l.append(float(_avg_cos(ctx_cpu).item()))
+                    if tm_cpu is not None:
+                        keep = ~tm_cpu
+                        if keep.any():
+                            ctx_um = ctx_cpu[keep]
+                        else:
+                            ctx_um = ctx_cpu
+                    else:
+                        ctx_um = ctx_cpu
+                    ctx_std_l.append(float(_avg_std(ctx_um).item()))
+                    ctx_rank_l.append(float(_eff_rank(ctx_um).item()))
+                    ctx_cos_l.append(float(_avg_cos(ctx_um).item()))
                 import statistics as _stats
                 avg_std_v = _stats.fmean(z_std_l)
                 eff_rank_v = _stats.fmean(z_rank_l)

@@ -7,7 +7,7 @@ from .losses import (
     mse_loss,
     variance_regularization,
 )
-from .masking import mask_tokens
+from .masking import pixel_mask_to_token_mask, sample_pixel_mask
 from .predictor import Predictor
 from .vjepa import VJEPA, count_parameters
 
@@ -16,7 +16,8 @@ __all__ = [
     "EMAEncoder",
     "tau_schedule",
     "Predictor",
-    "mask_tokens",
+    "sample_pixel_mask",
+    "pixel_mask_to_token_mask",
     "mse_loss",
     "variance_regularization",
     "avg_std",

@@ -52,29 +52,38 @@ class VJEPA(nn.Module):
         self.mask_token = nn.Parameter(torch.zeros(1, 1, self.latent_dim))
         nn.init.normal_(self.mask_token, std=0.02)
 
-    def apply_context_mask(self, context_tokens: torch.Tensor, mask_ratio: float) -> torch.Tensor:
-        if mask_ratio <= 0.0:
-            return context_tokens
-        b, n, d = context_tokens.shape
-        n_mask = int(round(mask_ratio * n))
-        if n_mask <= 0:
-            return context_tokens
-        noise = torch.rand(b, n, device=context_tokens.device)
-        mask_idx = noise.argsort(dim=-1)[:, :n_mask]
-        mask_tok = self.mask_token.expand(b, n_mask, d)
-        out = context_tokens.clone()
-        out.scatter_(1, mask_idx.unsqueeze(-1).expand(-1, -1, d), mask_tok)
-        return out
+    def encode_context(
+        self,
+        frames_4: torch.Tensor,
+        pixel_mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Encode context frames; optionally apply pre-encoder pixel-patch mask.
 
-    def encode_context(self, frames_4: torch.Tensor) -> torch.Tensor:
+        When `pixel_mask` (B, T, H, W bool, True = masked) is provided:
+          1. masked pixels are zeroed in the input
+          2. the encoder runs on the corrupted input
+          3. tokens at fully-masked patch positions are replaced with the
+             learned `mask_token` (raw, no temporal_pos) BEFORE temporal_pos
+             is added (Phase 2 F8 resolution: masked positions end up as
+             `mask_token + temporal_pos[t]`).
+        """
         b, t, c, h, w = frames_4.shape
         if t != self.context_frames:
             raise ValueError(
                 f"expected {self.context_frames} context frames, got {t}"
             )
-        flat = frames_4.reshape(b * t, c, h, w)
+        if pixel_mask is not None:
+            masked_frames = frames_4 * (~pixel_mask).unsqueeze(2).to(frames_4.dtype)
+        else:
+            masked_frames = frames_4
+        flat = masked_frames.reshape(b * t, c, h, w)
         tokens = self.encoder(flat)
         tokens = tokens.reshape(b, t, self.spatial_tokens, self.latent_dim)
+        if pixel_mask is not None:
+            from .masking import pixel_mask_to_token_mask
+            tm = pixel_mask_to_token_mask(pixel_mask, self.spatial_tokens)
+            tm_4d = tm.reshape(b, t, self.spatial_tokens, 1)
+            tokens = torch.where(tm_4d, self.mask_token.view(1, 1, 1, -1), tokens)
         tokens = tokens + self.temporal_pos.unsqueeze(0)
         return tokens.reshape(b, t * self.spatial_tokens, self.latent_dim)
 
@@ -98,11 +107,13 @@ class VJEPA(nn.Module):
         cov_weight: float = 1.0,
         reg_target: str = "z_pred",
         loss_fn: str = "mse",
+        context_token_mask: torch.Tensor | None = None,
     ) -> dict:
-        # The three monitors (avg_std, effective_rank, avg_cosine_sim) are
-        # intentionally not computed here: they're expensive (effective_rank
-        # falls back to CPU on MPS) and train.py recomputes them once per
-        # epoch on the last batch's z_pred, not once per batch.
+        # `context_token_mask` is the (B, n_context_tokens) bool mask where
+        # True = position was substituted with `mask_token`. When provided,
+        # variance/covariance regularization on `context_tokens` excludes
+        # these positions (they are near-constant by construction, would
+        # collapse var/cov on a healthy encoder; see Phase-2 reviewer C1+C3).
         z_target = z_target.detach()
         if loss_fn == "l1":
             sim = l1_loss(z_pred, z_target)
@@ -111,32 +122,34 @@ class VJEPA(nn.Module):
         else:
             sim = mse_loss(z_pred, z_target)
 
-        # reg_target controls *where* var/cov regularization is applied:
-        #   "z_pred"  → predictor output (original behavior; the predictor can
-        #               satisfy var/cov cheaply via its own weights while the
-        #               encoder still collapses).
-        #   "context" → online encoder output (forces the encoder itself to
-        #               stay diverse; this is the actual collapse-preventing
-        #               signal at small data scale).
-        #   "both"    → 0.5*z_pred + 0.5*context.
+        def _ctx_unmasked(t: torch.Tensor) -> torch.Tensor:
+            if context_token_mask is None:
+                return t
+            keep = ~context_token_mask
+            if not keep.any():
+                return t
+            return t[keep]
+
         if reg_target == "z_pred":
             var_reg = variance_regularization(z_pred)
             cov_reg = covariance_regularization(z_pred)
         elif reg_target == "context":
             if context_tokens is None:
                 raise ValueError("reg_target='context' requires context_tokens")
-            var_reg = variance_regularization(context_tokens)
-            cov_reg = covariance_regularization(context_tokens)
+            ctx_um = _ctx_unmasked(context_tokens)
+            var_reg = variance_regularization(ctx_um)
+            cov_reg = covariance_regularization(ctx_um)
         elif reg_target == "both":
             if context_tokens is None:
                 raise ValueError("reg_target='both' requires context_tokens")
+            ctx_um = _ctx_unmasked(context_tokens)
             var_reg = 0.5 * (
                 variance_regularization(z_pred)
-                + variance_regularization(context_tokens)
+                + variance_regularization(ctx_um)
             )
             cov_reg = 0.5 * (
                 covariance_regularization(z_pred)
-                + covariance_regularization(context_tokens)
+                + covariance_regularization(ctx_um)
             )
         else:
             raise ValueError(f"unknown reg_target: {reg_target!r}")
