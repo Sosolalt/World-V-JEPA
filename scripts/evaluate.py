@@ -451,6 +451,32 @@ def context_window_probe(
     )
 
 
+def difference_probe(
+    z_seq: np.ndarray, velocities: np.ndarray, train_idx: np.ndarray, test_idx: np.ndarray,
+    max_train_sequences: int = 2000,
+) -> dict:
+    """Probe velocities from spatially-pooled temporal differences of latents.
+
+    F9 fix from docs/eval_failure_modes.md (per Garrido et al. arXiv 2403.00504):
+    V-JEPA encodes positions per-token, not velocity. Velocity is the temporal
+    derivative of position, which lives in `z_t - z_{t-1}`. Pool over the 64
+    spatial tokens first to drop the spatial structure carrying positions; the
+    resulting D-dim vector per (sequence, time) is the natural feature for a
+    linear velocity readout.
+
+    z_seq: (N, T, n_tokens, D)
+    velocities: (N, T, n_balls, 2). Slot t in the difference holds
+    `pool(z_t) - pool(z_{t-1})`; target is `velocities[:, t]`.
+    """
+    z_pooled = z_seq.mean(axis=2)  # (N, T, D)
+    z_diff = z_pooled[:, 1:] - z_pooled[:, :-1]  # (N, T-1, D)
+    vel_aligned = velocities[:, 1:]  # (N, T-1, n_balls, 2)
+    return linear_probe(
+        z_diff, vel_aligned, train_idx, test_idx,
+        max_train_sequences=max_train_sequences,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Degradation curve
 # ---------------------------------------------------------------------------
@@ -1071,9 +1097,12 @@ def run_evaluation(
     print(f"[eval] target_z shape={target_z.shape}", flush=True)
     pos_probe_target = linear_probe(target_z, store.positions, train_idx, test_idx)
     vel_probe_target = linear_probe(target_z, store.velocities, train_idx, test_idx)
+    vel_probe_target_diff = difference_probe(target_z, store.velocities, train_idx, test_idx)
     print(
         f"[eval]   target/positions R²={pos_probe_target['overall_r2']:.4f} "
-        f"target/velocities R²={vel_probe_target['overall_r2']:.4f}",
+        f"target/velocities R²={vel_probe_target['overall_r2']:.4f} "
+        f"target/velocities_diff R²={vel_probe_target_diff['overall_r2']:.4f} "
+        f"(α={vel_probe_target_diff['alpha']:.2g})",
         flush=True,
     )
 
@@ -1082,9 +1111,12 @@ def run_evaluation(
     online_z = encode_all_frames_online(model, store, device)
     pos_probe_online = linear_probe(online_z, store.positions, train_idx, test_idx)
     vel_probe_online = linear_probe(online_z, store.velocities, train_idx, test_idx)
+    vel_probe_online_diff = difference_probe(online_z, store.velocities, train_idx, test_idx)
     print(
         f"[eval]   online/positions R²={pos_probe_online['overall_r2']:.4f} "
-        f"online/velocities R²={vel_probe_online['overall_r2']:.4f}",
+        f"online/velocities R²={vel_probe_online['overall_r2']:.4f} "
+        f"online/velocities_diff R²={vel_probe_online_diff['overall_r2']:.4f} "
+        f"(α={vel_probe_online_diff['alpha']:.2g})",
         flush=True,
     )
     del online_z  # not needed for plotting or further probes
@@ -1124,6 +1156,9 @@ def run_evaluation(
             "target": {
                 "positions": linear_probe(target_z, store.positions, r_train, r_test),
                 "velocities": linear_probe(target_z, store.velocities, r_train, r_test),
+                "velocities_diff": difference_probe(
+                    target_z, store.velocities, r_train, r_test
+                ),
             },
             "ctx_window": {
                 "positions": context_window_probe(
@@ -1137,6 +1172,8 @@ def run_evaluation(
         print(
             f"[eval]   regime/target/positions R²="
             f"{regime_metrics['target']['positions']['overall_r2']:.4f} "
+            f"regime/target/velocities_diff R²="
+            f"{regime_metrics['target']['velocities_diff']['overall_r2']:.4f} "
             f"regime/ctx-window/velocities R²="
             f"{regime_metrics['ctx_window']['velocities']['overall_r2']:.4f}",
             flush=True,
@@ -1179,8 +1216,10 @@ def run_evaluation(
         "vjepa": {
             "positions": pos_probe_target,
             "velocities": vel_probe_target,
+            "velocities_diff": vel_probe_target_diff,
             "positions_online": pos_probe_online,
             "velocities_online": vel_probe_online,
+            "velocities_diff_online": vel_probe_online_diff,
             "positions_ctx_window": pos_probe_ctx,
             "velocities_ctx_window": vel_probe_ctx,
         },
@@ -1202,9 +1241,12 @@ def run_evaluation(
         print(f"[eval] pixel_z shape={pixel_z.shape}", flush=True)
         pix_pos = linear_probe(pixel_z, store.positions, train_idx, test_idx)
         pix_vel = linear_probe(pixel_z, store.velocities, train_idx, test_idx)
+        pix_vel_diff = difference_probe(pixel_z, store.velocities, train_idx, test_idx)
         print(
             f"[eval]   pixel/positions R²={pix_pos['overall_r2']:.4f} "
-            f"pixel/velocities R²={pix_vel['overall_r2']:.4f}",
+            f"pixel/velocities R²={pix_vel['overall_r2']:.4f} "
+            f"pixel/velocities_diff R²={pix_vel_diff['overall_r2']:.4f} "
+            f"(α={pix_vel_diff['alpha']:.2g})",
             flush=True,
         )
 
@@ -1231,6 +1273,7 @@ def run_evaluation(
         metrics["pixel"] = {
             "positions": pix_pos,
             "velocities": pix_vel,
+            "velocities_diff": pix_vel_diff,
             "positions_ctx_window": pix_pos_ctx,
             "velocities_ctx_window": pix_vel_ctx,
             "ckpt": str(pixel_ckpt_path),
@@ -1246,6 +1289,9 @@ def run_evaluation(
                 "per_frame": {
                     "positions": linear_probe(pixel_z, store.positions, r_train, r_test),
                     "velocities": linear_probe(pixel_z, store.velocities, r_train, r_test),
+                    "velocities_diff": difference_probe(
+                        pixel_z, store.velocities, r_train, r_test
+                    ),
                 },
                 "ctx_window": {
                     "positions": context_window_probe(
@@ -1259,6 +1305,8 @@ def run_evaluation(
             print(
                 f"[eval]   pixel/regime/per-frame/positions R²="
                 f"{metrics['pixel']['regime_held_out']['per_frame']['positions']['overall_r2']:.4f} "
+                f"pixel/regime/per-frame/velocities_diff R²="
+                f"{metrics['pixel']['regime_held_out']['per_frame']['velocities_diff']['overall_r2']:.4f} "
                 f"pixel/regime/ctx-window/velocities R²="
                 f"{metrics['pixel']['regime_held_out']['ctx_window']['velocities']['overall_r2']:.4f}",
                 flush=True,
