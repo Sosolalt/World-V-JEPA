@@ -5,7 +5,9 @@
 
 ![Architecture](assets/architecture.png)
 
-![Billiard simulation](assets/simulation.gif)
+<p align="center">
+  <img src="assets/simulation.gif" alt="Billiard simulation" />
+</p>
 
 ---
 
